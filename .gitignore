@@ -1,0 +1,9 @@
+ui_*.h
+actiCHamp/.vs/
+actiCHamp/bin/
+actiCHamp/Debug/
+actiCHamp/Release/
+*.dll
+*.exe
+*.bit
+*.aps
