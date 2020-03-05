@@ -33,6 +33,93 @@ void LibTalker::Error(const std::string& sError, int nErrorNum)
 		break;
 		// TODO:
 	case -2:
+		sErrorFromAmp = "AMP_ERR_PARAM";
+		break;
+	case -3:
+		sErrorFromAmp = "AMP_ERR_VERSION";
+		break;
+	case -4:
+		sErrorFromAmp = "AMP_ERR_MEMORY";
+		break;
+	case -5:
+		sErrorFromAmp = "AMP_ERR_BUSY";
+		break;
+	case -6:
+		sErrorFromAmp = "AMP_ERR_NODEVICE";
+		break;
+	case -7:
+		sErrorFromAmp = "AMP_ERR_NOSUPPORT";
+		break;
+	case -8:
+		sErrorFromAmp = "AMP_ERR_EXCEPTION";
+		break;
+	case -9:
+		sErrorFromAmp = "AMP_ERR_FWVERSION";
+		break;
+	case -10:
+		sErrorFromAmp = "AMP_ERR_TIMEOUT";
+		break;
+	case -11:
+		sErrorFromAmp = "AMP_ERR_BUFFERSIZE";
+		break;
+
+	case -101:
+		sErrorFromAmp = "IF_ERR_FAIL";
+		break;
+	case -102:
+		sErrorFromAmp = "IF_ERR_BT_SERVICE";
+		break;
+	case -103:
+		sErrorFromAmp = "IF_ERR_MEMORY";
+		break;
+	case -104:
+		sErrorFromAmp = "IF_ERR_NODEVICE";
+		break;
+	case -105:
+		sErrorFromAmp = "IF_ERR_CONNECT";
+		break;
+	case -106:
+		sErrorFromAmp = "IF_ERR_DISCONNECTED";
+		break;
+	case -107:
+		sErrorFromAmp = "IF_ERR_TIMEOUT";
+		break;
+	case -108:
+		sErrorFromAmp = "IF_ERR_ALREADYOPEN";
+		break;
+	case -109:
+		sErrorFromAmp = "IF_ERR_PARAMETER";
+		break;
+	case -110:
+		sErrorFromAmp = "IF_ERR_ATCOMMAND";
+		break;
+
+	case -200:
+		sErrorFromAmp = "DEVICE_ERR_BASE";
+		break;
+	case -201:
+		sErrorFromAmp = "DEVICE_ERR_FAIL";
+		break;
+	case -202:
+		sErrorFromAmp = "DEVICE_ERR_PARAM";
+		break;
+	case -203:
+		sErrorFromAmp = "DEVICE_ERR_VERSION";
+		break;
+	case -204:
+		sErrorFromAmp = "DEVICE_ERR_MEMORY";
+		break;
+	case -205:
+		sErrorFromAmp = "DEVICE_ERR_BUSY";
+		break;
+	case -206:
+		sErrorFromAmp = "DEVICE_ERR_SDWRITE";
+		break;
+	case -207:
+		sErrorFromAmp = "DEVICE_ERR_SDREAD";
+		break;
+	case -208:
+		sErrorFromAmp = "DEVICE_ERR_NOSD";
 		break;
 	}
 	sFullError.append(sErrorFromAmp);

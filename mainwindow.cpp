@@ -11,6 +11,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
+#include <iostream>
 
 const int m_pnBaseSamplingRates[] = {10000,50000,100000};
 const int m_pnSubSampleDivisors[] = { 1,2,5,10,20,50,100 };
@@ -40,8 +41,23 @@ MainWindow::MainWindow(QWidget *parent, const std::string &config_file): QMainWi
 	QObject::connect(ui->actionSave_Configuration, SIGNAL(triggered()), this, SLOT(save_config_dialog()));
 	QObject::connect(ui->baseSamplingRate, SIGNAL(currentIndexChanged(int)), this, SLOT(setSamplingRate()));
 	QObject::connect(ui->subSampleDivisor, SIGNAL(currentIndexChanged(int)), this, SLOT(setSamplingRate()));
+	QObject::connect(ui->actionVersions, SIGNAL(triggered()), this, SLOT(versionsDialog()));
 
 	setSamplingRate();
+}
+
+void MainWindow::versionsDialog()
+{
+	t_VersionNumber libVersion;
+	GetLibraryVersion(&libVersion);
+	int32_t lslProtocolVersion = lsl::protocol_version();
+	int32_t lslLibVersion = lsl::library_version();
+	std::stringstream ss;
+	ss << "Amplifier_LIB: " << LIBVERSIONSTREAM(libVersion) << "\n" <<
+		"lsl protocol: " << LSLVERSIONSTREAM(lslProtocolVersion) << "\n" <<
+		"liblsl: " << LSLVERSIONSTREAM(lslLibVersion) << "\n" <<
+		"App: " << APPVERSIONSTREAM(m_AppVersion) << "_beta";
+	QMessageBox::information(this, "Versions", ss.str().c_str(), QMessageBox::Ok);
 }
 
 void MainWindow::setSamplingRate()
@@ -304,7 +320,7 @@ void MainWindow::link()
 // background data reader thread
 void MainWindow::read_thread(const std::vector<std::string>& channelLabels) 
 {
-	int res = SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+	//int res = SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 	int nEnabledChannelCnt = m_nEEGChannelCount + ((m_bUseAUX) ? 8 : 0);
 	int nExtraEEGChannelCnt = 0;
 	if (m_bSampledMarkersEEG) nExtraEEGChannelCnt+=1;
@@ -313,7 +329,13 @@ void MainWindow::read_thread(const std::vector<std::string>& channelLabels)
 	try
 	{
 		// setup LSL
-		lsl::stream_outlet* poutMarkerOutlet;
+		lsl::stream_outlet* poutMarkerOutlet = NULL;
+		std::cout << std::string("actiCHamp" + m_LibTalker.getSerialNumber());
+		std::cout << "EEG";
+		std::cout << nEnabledChannelCnt + nEnabledChannelCnt;
+		std::cout << (double)m_nSamplingRate;
+		std::cout << lsl::cf_float32;
+		std::cout << m_LibTalker.getSerialNumber();
 		lsl::stream_info infoData("actiCHamp-" + m_LibTalker.getSerialNumber(),
 			"EEG",
 			nEnabledChannelCnt + nExtraEEGChannelCnt,
@@ -395,7 +417,7 @@ void MainWindow::read_thread(const std::vector<std::string>& channelLabels)
 				.append_child_value("manufacturer", "Brain Products");
 
 			infoMarkers.desc().append_child("versions")
-				.append_child_value("Amplifier_LIB", ssLib.str())
+				.append_child_value("Amplifier_LIB", ssLib.str() + "_beta")
 				.append_child_value("lsl_protocol", ssProt.str())
 				.append_child_value("liblsl", ssLSL.str())
 				.append_child_value("App", ssApp.str());

@@ -49,6 +49,8 @@ private slots:
 	// set the min chunk size according sampling rate
 	void setMinChunk();
 
+    void versionsDialog();
+
 private:
 
     // background data reader thread
