@@ -10,6 +10,7 @@ class LibTalker
 private:
 	// data get from device (defined in construction)
 	// these are initialized in the constructor
+	int m_nConnectedDeviceCnt;
 	HANDLE m_Handle;                 // device handle
 	std::string m_sSerialNumber;     // serial number
 	std::vector<std::pair<HANDLE, std::string>> m_vphsHandleSerialNumMap;
@@ -18,7 +19,8 @@ private:
 	int m_nAvailableModules;   
 	int  m_nRequestedEEGChannelCnt;
 	int m_nTriggerIdx;
-	bool m_bUseAux;
+	int m_nAuxChannelCnt;
+	int m_nRequestedAuxChannelCnt;
 	bool m_bUseFDA;
 	bool m_bUseSim;
 	bool m_bUseActiveShield;
@@ -56,7 +58,8 @@ public:
 	LibTalker::LibTalker();
 	~LibTalker();
 	void Error(const std::string& sError, int nErrorNum);
-	void Connect(int nIdx);
+	void Connect(const std::string& sSerialNumber);
+	void enumerate(std::vector<std::pair<std::string, int>>& ampData);
 	void Setup();
 	void Close();
 	void StopAcquisition(void);
@@ -71,11 +74,12 @@ public:
 	inline HANDLE            getHandle(void) { if (m_Handle == NULL)return NULL; else return m_Handle; }
 	inline std::string&      getSerialNumber(void) { return m_sSerialNumber; }
 	inline void              setRequestedEEGChannelCnt(int nChannelCnt) { m_nRequestedEEGChannelCnt = nChannelCnt; }
-	inline void              setUseAux(bool bUseAux) { m_bUseAux = bUseAux; }
+	inline void              setRequestedAuxChannelCnt(int nChannelCnt) { m_nRequestedAuxChannelCnt = nChannelCnt; }
 	inline void              setUseFDA(bool bUseFDA) { m_bUseFDA = bUseFDA; }
 	inline void              setUseActiveShield(bool bUseActiveShield) { m_bUseActiveShield = bUseActiveShield; }
 	inline int               getAvailableChannelCnt(void) { return m_nAvailableChannelCnt; }
 	inline int				 getEEGChannelCnt(void) { return m_nEEGChannelCnt; }
+	inline int               getAuxChannelCnt(void) { return m_nAuxChannelCnt; }
 	inline int               getRecordingMode(void) { return m_nRecordingMode; }
 	inline int               getEnabledChannelCnt(void) { return m_nEnabledChannelCnt; }
 	inline int               getSampleSize(void) { return m_nSampleSize; }

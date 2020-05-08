@@ -159,7 +159,7 @@ echo F| xcopy /y /s "C:\Users\david.medine\Devel\SDK\Amplifiers\actiCHamp\actiCH
       <DebugInformationFormat />
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
-      <AdditionalIncludeDirectories>C:\local\boost_1_71_0;C:\Users\david.medine\LSL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\david.medine\LSL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -182,6 +182,7 @@ echo F| xcopy /y "C:\Users\david.medine\Devel\SDK\Amplifiers\actiCHamp\actiCHamp
 echo F| xcopy /y "C:\Users\david.medine\Devel\SDK\Amplifiers\actiCHamp\actiCHampLib\Betas\actiCHampLib 1.19.11.28\Win32\Release\ActiChampX.bit" "$(SolutionDir)bin\$(Platform)\$(Configuration)\ActiChampX.bit"
 echo F| xcopy /y "$(SolutionDir)..\explanation_of_trigger_marker_types.pdf" "$(SolutionDir)bin\$(Platform)\$(Configuration)\explanation_of_trigger_marker_types.pdf"
 echo F| xcopy /y "$(SolutionDir)..\LICENSE.txt" "$(SolutionDir)bin\$(Platform)\$(Configuration)\LICENSE.txt"
+echo F| xcopy /y "$(SolutionDir)..\release_notes.txt" "$(SolutionDir)bin\$(Platform)\$(Configuration)\release_notes.txt"
 mkdir "$(SolutionDir)bin\$(Platform)\actiCHamp_Win32"
 xcopy /y /s  "$(SolutionDir)bin\$(Platform)\$(Configuration)" "$(SolutionDir)bin\$(Platform)\actiCHamp_Win32"</Command>
     </PostBuildEvent>
@@ -193,7 +194,7 @@ xcopy /y /s  "$(SolutionDir)bin\$(Platform)\$(Configuration)" "$(SolutionDir)bin
       </DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
-      <AdditionalIncludeDirectories>C:\local\boost_1_71_0;C:\Users\david.medine\LSL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\david.medine\LSL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -216,6 +217,7 @@ echo F| xcopy /y "C:\Users\david.medine\Devel\SDK\Amplifiers\actiCHamp\actiCHamp
 echo F| xcopy /y "C:\Users\david.medine\Devel\SDK\Amplifiers\actiCHamp\actiCHampLib\Betas\actiCHampLib 1.19.11.28\x64\Release\ActiChampX.bit" "$(SolutionDir)bin\$(Platform)\$(Configuration)\ActiChampX.bit"
 echo F| xcopy /y "$(SolutionDir)..\explanation_of_trigger_marker_types.pdf" "$(SolutionDir)bin\$(Platform)\$(Configuration)\explanation_of_trigger_marker_types.pdf"
 echo F| xcopy /y "$(SolutionDir)..\LICENSE.txt" "$(SolutionDir)bin\$(Platform)\$(Configuration)\LICENSE.txt"
+echo F| xcopy /y "$(SolutionDir)..\release_notes.txt" "$(SolutionDir)bin\$(Platform)\$(Configuration)\release_notes.txt"
 mkdir "$(SolutionDir)bin\$(Platform)\actiCHamp_x64"
 xcopy /y /s  "$(SolutionDir)bin\$(Platform)\$(Configuration)" "$(SolutionDir)bin\$(Platform)\actiCHamp_x64"</Command>
     </PostBuildEvent>
@@ -237,8 +239,6 @@ xcopy /y /s  "$(SolutionDir)bin\$(Platform)\$(Configuration)" "$(SolutionDir)bin
   <ItemGroup>
     <ClInclude Include="..\Amplifier_LIB.h" />
     <ClInclude Include="..\LibTalker.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="resource1.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="icon.rc" />

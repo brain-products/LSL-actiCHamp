@@ -3,7 +3,6 @@
 
 LibTalker::LibTalker()
 {
-	m_bUseAux = false;
 	m_bUseFDA = false;
 	m_bUseSim = false;
 	m_bUseActiveShield = false;
@@ -11,9 +10,11 @@ LibTalker::LibTalker()
 	m_bUseSampleCtr = false;
 	m_bExcludeTriggers = false;
 	m_nRequestedEEGChannelCnt = 0;
+	m_nRequestedAuxChannelCnt = 0;
 	m_nDevNo = 0;
 	m_nSampleSize = 0;
 	m_fLastTriggerVal = -1.0;
+	m_nConnectedDeviceCnt = -1;
 }
 
 LibTalker::~LibTalker()
@@ -126,34 +127,133 @@ void LibTalker::Error(const std::string& sError, int nErrorNum)
 	throw std::runtime_error(sFullError);
 }
 
+void LibTalker::enumerate(std::vector<std::pair<std::string, int>>& ampData) {
+
+	int nRes;
+	char HWI[20];
 
 
-void LibTalker::Connect(int nIdx)
+	if (!ampData.empty()) {
+		throw std::runtime_error("Input ampData vector isn't empty");
+		return;
+	}
+
+	strcpy_s(HWI, "USB");
+
+	nRes = ampEnumerateDevices(HWI, sizeof(HWI), "actiCHamp", 0);
+
+	if (nRes <= 0)
+	{
+		m_nConnectedDeviceCnt = -1;
+		Error("Enumeration error", nRes);
+	}
+	else
+	{
+		m_nConnectedDeviceCnt = nRes;
+		for (int i = 0; i < nRes; i++)
+		{
+			int nResult;
+			HANDLE handle = NULL;
+
+			nResult = ampOpenDevice(i, &handle);
+			if (nResult != AMP_OK)
+				Error("Enumeration error openning device: ", nResult);
+
+
+			char sVar[20];
+			nResult = ampGetProperty(handle, PG_DEVICE, i, DPROP_CHR_SerialNumber, sVar, sizeof(sVar));
+			if (nResult != AMP_OK)
+				Error("Enumeration error getting device serial number: ", nResult);
+
+			else
+			{
+				//int32_t nAvailableModules;
+				int32_t nAvailableChannels;
+				nResult = ampGetProperty(handle, PG_DEVICE, 0, DPROP_I32_AvailableChannels, &nAvailableChannels, sizeof(nAvailableChannels));
+				if (nResult != AMP_OK)
+					Error("Enumeration error getting available channel count: ", nResult);
+				/*int32_t nVar;
+				char sModName[100];
+				int nTotalAvailableChannels = 0;
+				for (int j = 0; j < nAvailableModules; j++)
+				{
+					nResult = ampGetProperty(handle, PG_MODULE, j, MPROP_I32_UseableChannels, &nVar, sizeof(nVar));
+					if (nResult != AMP_OK) 
+						Error("Enumeration error getting device channel: ", nResult);
+				}*/
+				int nEEGChannels = 0;
+				t_ChannelType ct;
+				for (int i = 0; i < nAvailableChannels; i++)
+				{
+					nResult = ampGetProperty(handle, PG_CHANNEL, i, CPROP_I32_Type, &ct, sizeof(ct));
+					if (nResult != AMP_OK)
+						Error("Enumeration error scanning channel types: ", nResult);
+					else
+						if (ct == CT_EEG)
+							nEEGChannels++;
+				}
+				ampData.push_back(std::make_pair(std::string(sVar), nEEGChannels));
+			}
+			nResult = ampCloseDevice(handle);
+			if (nResult != AMP_OK) 
+				Error("Enumeration error closing device: ", nResult);
+		}
+	}
+}
+
+
+void LibTalker::Connect(const std::string& sSerialNumber)
 {
 
-	m_nDevNo = nIdx;
 	char hwi[20];
 	strcpy_s(hwi, "USB");
 	std::string sHWDeviceAddress = "";
 	int res;
 	Close();
-	res = ampEnumerateDevices(hwi, sizeof(hwi), (const char*)sHWDeviceAddress.data(), 0);
-	if (res < AMP_OK)
+	if (m_nConnectedDeviceCnt == -1)
 	{
-		Error("Error enumerating devices: ", res);
-		return;
+		res = ampEnumerateDevices(hwi, sizeof(hwi), (const char*)sHWDeviceAddress.data(), 0);
+		if (res < AMP_OK)
+		{
+			Error("Connection error enumerating devices: ", res);
+			return;
+		}
+		m_nConnectedDeviceCnt = res;
 	}
+
+	char pcSerialNumber[100];
 	m_Handle = NULL;
-	res = ampOpenDevice(nIdx, &m_Handle);
-	if (res != AMP_OK)
+	HANDLE handle;
+	for (int i = 0; i < m_nConnectedDeviceCnt; i++)
 	{
-		Error("Error opening device: ", res);
-		return;
+		res = ampOpenDevice(i, &handle);
+		if (res != AMP_OK)
+		{
+			Error("Connection error openning device: ", res);
+			return;
+		}
+		res = ampGetProperty(handle, PG_DEVICE, i, DPROP_CHR_SerialNumber, pcSerialNumber, sizeof(pcSerialNumber));
+		if (res != AMP_OK)
+		{
+			Error("Connection error getting serial number: ", res);
+			return;
+		}
+		if (sSerialNumber.compare(pcSerialNumber) == 0)
+		{
+			m_nDevNo = i;
+			m_Handle = handle;
+			break;
+		}
+		res = ampCloseDevice(handle);
+		
 	}
+	if (m_Handle == NULL)
+		throw std::exception("Could not connect to specified amplifier. Please recheck connections and re-scan for devices.");
+
 	res = ampGetProperty(m_Handle, PG_DEVICE, 0, DPROP_I32_AvailableChannels, &m_nAvailableChannelCnt, sizeof(m_nAvailableChannelCnt));
 	if (res != AMP_OK)
 	{
-		Error("Error getting available channels:", res);
+		Error("Connection error getting available channels: ", res);
 		return;
 	}
 	int32_t nChannelType;
@@ -164,7 +264,7 @@ void LibTalker::Connect(int nIdx)
 		res = ampGetProperty(m_Handle, PG_CHANNEL, i, CPROP_I32_Type, &nChannelType, sizeof(nChannelType));
 		if (res != AMP_OK)
 		{
-			sErr = "Error getting channel type for channel " + std::to_string(i);
+			sErr = "Connection error getting channel type for channel " + std::to_string(i);
 			Error(sErr, res);
 			return;
 		}
@@ -183,6 +283,13 @@ void LibTalker::EnableChannels()
 	int32_t nVal, nChannType;
 	m_nEnabledChannelCnt = 0;
 
+	if (m_nRequestedEEGChannelCnt > m_nAvailableChannelCnt)
+		throw std::exception(std::string("Requested Number of EEG channels (" 
+			+std::to_string(m_nRequestedEEGChannelCnt) 
+			+ ") is greater than the number of channels (" 
+			+ std::to_string(m_nAvailableChannelCnt) 
+			+ "available on this device.").c_str());
+
 	char pcFunction[100];
 	nVal = 0;
 	for (int i = 0; i < m_nAvailableChannelCnt; i++)
@@ -198,7 +305,7 @@ void LibTalker::EnableChannels()
 			res = ampSetProperty(m_Handle, PG_CHANNEL, i, CPROP_B32_RecordingEnabled, &nVal, sizeof(nVal));
 			m_nEnabledChannelCnt++;
 		}
-		if (nChannType == CT_AUX && m_bUseAux)
+		if (nChannType == CT_AUX && i < m_nRequestedAuxChannelCnt + m_nEEGChannelCnt)
 		{
 			nChannType = 1;
 			res = ampSetProperty(m_Handle, PG_CHANNEL, i, CPROP_B32_RecordingEnabled, &nVal, sizeof(nVal));
@@ -206,9 +313,6 @@ void LibTalker::EnableChannels()
 		}
 		if (nChannType == CT_TRG && m_bUseTriggers)
 		{
-			// only record input triggers?
-			//if (!bISecondsTrigger)
-			//{
 			res = ampGetProperty(m_Handle, PG_CHANNEL, i, CPROP_CHR_Function, &pcFunction, sizeof(pcFunction));
 			if (strcmp(pcFunction, "Trigger Input")==0)
 			{
@@ -216,11 +320,8 @@ void LibTalker::EnableChannels()
 				res = ampSetProperty(m_Handle, PG_CHANNEL, i, CPROP_B32_RecordingEnabled, &nVal, sizeof(nVal));
 				m_nEnabledChannelCnt++;
 			}
-				//bIsSecondTrigger = true;
-			//}
 		}
 	}
-
 }
 
 void LibTalker::Setup()
@@ -241,18 +342,18 @@ void LibTalker::Setup()
 	float fVal = m_fBaseSamplingRate;
 	res = ampSetProperty(m_Handle, PG_DEVICE, 0, DPROP_F32_BaseSampleRate, &fVal, sizeof(fVal));
 	if (res != AMP_OK)
-		Error("Error setting base sampling rate during setup: ", res);
+		Error("Setup error setting base sampling rate: ", res);
 	fVal = m_fSubSampleDivisor;
 	res = ampSetProperty(m_Handle, PG_DEVICE, 0, DPROP_F32_SubSampleDivisor, &fVal, sizeof(fVal));
 	if (res != AMP_OK)
-		Error("Error setting subsample divisor during setup: ", res);
+		Error("Setup error setting subsample divisor: ", res);
 	EnableChannels();
 	if (res != AMP_OK)
-		Error("Error setting recording mode: ", res);
+		Error("Setup error setting recording mode: ", res);
 
 	res = ampStartAcquisition(m_Handle);
 	if (res != AMP_OK)
-		Error("Error starting acquistion during setup: ", res);
+		Error("Setup error starting acquistion: ", res);
 	
 	res = ampGetProperty(m_Handle, PG_DEVICE, 0, DPROP_CHR_SerialNumber, &pcSerialNumber, sizeof(pcSerialNumber));
 	m_sSerialNumber = std::string(pcSerialNumber);
@@ -308,7 +409,7 @@ void LibTalker::Setup()
 	m_nSampleSize += 8;
 
 	if (res != AMP_OK)
-		Error("Error stopping acquistion during setup: ", res);
+		Error("Setup error stopping acquistion: ", res);
 }
 
 void LibTalker::Close(void) {
@@ -348,7 +449,6 @@ int64_t LibTalker::PullAmpData(BYTE* buffer, int nBufferSize, std::vector<float>
 		if (m_bUseSampleCtr)
 			fCounterVal = (float)*(int64_t*)&buffer[s * m_nSampleSize];
 		nOffset = 8;
-		//vfTmpData.resize(m_nEnabledChannelCnt);
 
 		for (int i = 0; i < m_nEnabledChannelCnt; i++)
 		{

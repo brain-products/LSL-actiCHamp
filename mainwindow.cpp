@@ -5,13 +5,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "Amplifier_LIB.h"
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/foreach.hpp>
+#include <QtCore/QtCore>
+
 #include <iostream>
+#include <sstream>
 
 const int m_pnBaseSamplingRates[] = {10000,50000,100000};
 const int m_pnSubSampleDivisors[] = { 1,2,5,10,20,50,100 };
@@ -20,33 +17,36 @@ void Transpose(const std::vector<std::vector<double> > &in, std::vector<std::vec
 
 #define LIBVERSIONSTREAM(version) version.Major << "." << version.Minor << "." << version.Build << "." << version.Revision
 #define LSLVERSIONSTREAM(version) (version/100) << "." << (version%100)
-#define APPVERSIONSTREAM(version) version.Major << "." << version.Minor
+#define APPVERSIONSTREAM(version) version.Major << "." << version.Minor << "." << version.Bugfix
 
-MainWindow::MainWindow(QWidget *parent, const std::string &config_file): QMainWindow(parent),ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget *parent, const char* config_file): QMainWindow(parent),ui(new Ui::MainWindow)
 {
 	m_AppVersion.Major = 1;
-	m_AppVersion.Minor = 12;
-	//_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF ); 
-	//_CrtSetReportMode( _CRT_ERROR, _CRTDBG_MODE_DEBUG ); 
+	m_AppVersion.Minor = 13;
+	m_AppVersion.Bugfix = 0;
 
 	ui->setupUi(this);
 	m_bUseActiveShield = false;
-	// parse startup config file
-	load_config(config_file);
+	m_bOverrideAutoUpdate = false;
+	LoadConfig(config_file);
 
 	// make GUI connections
 	QObject::connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(close()));
-	QObject::connect(ui->linkButton, SIGNAL(clicked()), this, SLOT(link()));
-	QObject::connect(ui->actionLoad_Configuration, SIGNAL(triggered()), this, SLOT(load_config_dialog()));
-	QObject::connect(ui->actionSave_Configuration, SIGNAL(triggered()), this, SLOT(save_config_dialog()));
-	QObject::connect(ui->baseSamplingRate, SIGNAL(currentIndexChanged(int)), this, SLOT(setSamplingRate()));
-	QObject::connect(ui->subSampleDivisor, SIGNAL(currentIndexChanged(int)), this, SLOT(setSamplingRate()));
-	QObject::connect(ui->actionVersions, SIGNAL(triggered()), this, SLOT(versionsDialog()));
+	QObject::connect(ui->linkButton, SIGNAL(clicked()), this, SLOT(Link()));
+	QObject::connect(ui->actionLoad_Configuration, SIGNAL(triggered()), this, SLOT(LoadConfigDialog()));
+	QObject::connect(ui->actionSave_Configuration, SIGNAL(triggered()), this, SLOT(SaveConfigDialog()));
+	QObject::connect(ui->baseSamplingRate, SIGNAL(currentIndexChanged(int)), this, SLOT(SetSamplingRate()));
+	QObject::connect(ui->subSampleDivisor, SIGNAL(currentIndexChanged(int)), this, SLOT(SetSamplingRate()));
+	QObject::connect(ui->actionVersions, SIGNAL(triggered()), this, SLOT(VersionsDialog()));
+	QObject::connect(ui->refreshDevices, SIGNAL(clicked()), this, SLOT(RefreshDevices()));
+	QObject::connect(ui->eegChannelCount, SIGNAL(valueChanged(int)), this, SLOT(UpdateChannelLabelsGUI(int)));
+	QObject::connect(ui->auxChannelCount, SIGNAL(valueChanged(int)), this, SLOT(UpdateChannelLabelsGUI(int)));
+	QObject::connect(ui->availableDevices, SIGNAL(currentIndexChanged(int)), this, SLOT(ChooseDevice(int)));
 
-	setSamplingRate();
+	SetSamplingRate();
 }
 
-void MainWindow::versionsDialog()
+void MainWindow::VersionsDialog()
 {
 	t_VersionNumber libVersion;
 	GetLibraryVersion(&libVersion);
@@ -60,7 +60,7 @@ void MainWindow::versionsDialog()
 	QMessageBox::information(this, "Versions", ss.str().c_str(), QMessageBox::Ok);
 }
 
-void MainWindow::setSamplingRate()
+void MainWindow::SetSamplingRate()
 {
 	int nNum = m_pnBaseSamplingRates[ui->baseSamplingRate->currentIndex()];
 	int nDenom = m_pnSubSampleDivisors[ui->subSampleDivisor->currentIndex()];
@@ -69,51 +69,55 @@ void MainWindow::setSamplingRate()
 	m_nSamplingRate = nNum / nDenom;
 	//setMinChunk();
 }
+//
+//void MainWindow::SetMinChunk()
+//{
+//
+//
+//	switch (m_nSamplingRate) 
+//	{
+//	case 100:
+//		if (ui->chunkSize->value() < 100)ui->chunkSize->setValue(100);
+//		ui->chunkSize->setMinimum(100);
+//		break;
+//	case 125:
+//		if(ui->chunkSize->value()<80)ui->chunkSize->setValue(80);
+//		ui->chunkSize->setMinimum(80);
+//		break;
+//	case 250:
+//		if(ui->chunkSize->value()<40)ui->chunkSize->setValue(40);
+//		ui->chunkSize->setMinimum(40);
+//		break;
+//	case 500:
+//		if(ui->chunkSize->value()<20)ui->chunkSize->setValue(20);
+//		ui->chunkSize->setMinimum(20);
+//		break;
+//	case 1000:
+//		if(ui->chunkSize->value()<10)ui->chunkSize->setValue(10);
+//		ui->chunkSize->setMinimum(10);
+//		break;
+//	}
+//}
 
-void MainWindow::setMinChunk(){
-
-
-	switch (m_nSamplingRate) {
-	case 100:
-		if (ui->chunkSize->value() < 100)ui->chunkSize->setValue(100);
-		ui->chunkSize->setMinimum(100);
-		break;
-	case 125:
-		if(ui->chunkSize->value()<80)ui->chunkSize->setValue(80);
-		ui->chunkSize->setMinimum(80);
-		break;
-	case 250:
-		if(ui->chunkSize->value()<40)ui->chunkSize->setValue(40);
-		ui->chunkSize->setMinimum(40);
-		break;
-	case 500:
-		if(ui->chunkSize->value()<20)ui->chunkSize->setValue(20);
-		ui->chunkSize->setMinimum(20);
-		break;
-	case 1000:
-		if(ui->chunkSize->value()<10)ui->chunkSize->setValue(10);
-		ui->chunkSize->setMinimum(10);
-		break;
-	}
+void MainWindow::LoadConfigDialog() 
+{
+	QString filename = QFileDialog::getOpenFileName(this,"Load Configuration File","","Configuration Files (*.cfg)");
+	if (!filename.isEmpty())
+		LoadConfig(filename);
 }
 
-void MainWindow::load_config_dialog() {
-	QString sel = QFileDialog::getOpenFileName(this,"Load Configuration File","","Configuration Files (*.cfg)");
-	if (!sel.isEmpty())
-		load_config(sel.toStdString());
+void MainWindow::SaveConfigDialog() 
+{
+	QString filename = QFileDialog::getSaveFileName(this, "Save Configuration File", "", "Configuration Files (*.cfg)");
+	if (!filename.isEmpty())
+		SaveConfig(filename);
 }
 
-void MainWindow::save_config_dialog() {
-	QString sel = QFileDialog::getSaveFileName(this,"Save Configuration File","","Configuration Files (*.cfg)");
-	if (!sel.isEmpty())
-		save_config(sel.toStdString());
-}
-
-void MainWindow::closeEvent(QCloseEvent *ev) {
+void MainWindow::closeEvent(QCloseEvent *ev) 
+{
 	if (m_ptReadThread)
 		ev->ignore();
-	/*else
-		_CrtDumpMemoryLeaks();  */
+
 }
 
 int getBaseSamplingRateIndex(int nBaseSamplingRate)
@@ -152,165 +156,271 @@ int getSubSampleDivisorIndex(int nSubSampleDivisor)
 	return 0;
 }
 
-
-void MainWindow::load_config(const std::string &filename) {
-	using boost::property_tree::ptree;
-	ptree pt;
-
-	// parse file
-	try {
-		read_xml(filename, pt);
-	} catch(std::exception &e) {
-		QMessageBox::information(this,"Error",(std::string("Cannot read config file: ")+= e.what()).c_str(),QMessageBox::Ok);
-		return;
+void MainWindow::RefreshDevices()
+{
+	ui->availableDevices->blockSignals(true);
+	QStringList qsl;
+	std::vector<std::pair<std::string, int>> ampData;
+	this->setCursor(Qt::WaitCursor);
+	this->setWindowTitle("Searching for Devices...");
+	//wait_message();
+	//ampData.clear();
+	try
+	{
+		m_LibTalker.enumerate(ampData);
+	}
+	catch (std::exception & e)
+	{
+		QMessageBox::critical(this, "Error", (std::string("Could not locate actiCHamp device(s): ") += e.what()).c_str(), QMessageBox::Ok);
 	}
 
-	// get config values
-	try {
+	this->setCursor(Qt::ArrowCursor);
 
-		ui->deviceNumber->setValue(pt.get<int>("settings.devicenumber",0));
-		ui->channelCount->setValue(pt.get<int>("settings.channelcount",32));
-		ui->chunkSize->setValue(pt.get<int>("settings.chunksize",10));
-		// TODO: make this a switch statement based on actual values
-		m_nBaseSamplingRate = pt.get<int>("settings.basesamplingrate", 10000);
-		ui->baseSamplingRate->setCurrentIndex(getBaseSamplingRateIndex(m_nBaseSamplingRate));
-		m_nSubSampleDivisor = pt.get<int>("settings.subsampledivisor", 20);
-		ui->nominalSamplingRate->setText((std::to_string(m_nBaseSamplingRate / m_nSubSampleDivisor)).c_str());
-		ui->subSampleDivisor->setCurrentIndex(getSubSampleDivisorIndex(m_nSubSampleDivisor));
-		//setMinChunk();
-		ui->useAUX->setCheckState(pt.get<bool>("settings.useaux",false) ? Qt::Checked : Qt::Unchecked);
-		ui->fastDataAccess->setCheckState(pt.get<bool>("settings.usefda", false) ? Qt::Checked : Qt::Unchecked);
-		ui->useSampleCtr->setCheckState(pt.get<bool>("settings.usesamplectr", false) ? Qt::Checked : Qt::Unchecked);
-		m_bUseActiveShield = pt.get<bool>("settings.activeshield",false);
-		ui->sampledMarkersEEG->setCheckState(pt.get<bool>("settings.sampledmarkersEEG",false) ? Qt::Checked : Qt::Unchecked);
-		ui->unsampledMarkers->setCheckState(pt.get<bool>("settings.unsampledmarkers",false) ? Qt::Checked : Qt::Unchecked);	
-		ui->channelLabels->clear();
-		BOOST_FOREACH(ptree::value_type &v, pt.get_child("channels.labels"))
-			ui->channelLabels->appendPlainText(v.second.data().c_str());
-		setSamplingRate();
-	} catch(std::exception &) {
-		QMessageBox::information(this,"Error in Config File","Could not read out config parameters.",QMessageBox::Ok);
-		return;
-	}
-}
+	if (!m_psAmpSns.empty())m_psAmpSns.clear();
+	if (!m_pnUsableChannelsByDevice.empty()) m_pnUsableChannelsByDevice.clear();
 
-void MainWindow::save_config(const std::string &filename) {
-	using boost::property_tree::ptree;
-	ptree pt;
+	if (!ampData.empty()) {
+		ui->availableDevices->clear();
+		std::stringstream ss;
+		int i = 0;
 
-	// transfer UI content into property tree
-	try {
-		pt.put("settings.devicenumber",ui->deviceNumber->value());
-		pt.put("settings.channelcount",ui->channelCount->value());
-		pt.put("settings.chunksize",ui->chunkSize->value());
-		pt.put("settings.basesamplingrate", m_pnBaseSamplingRates[ui->baseSamplingRate->currentIndex()]);
-		pt.put("settings.subsampledivisor", m_pnSubSampleDivisors[ui->subSampleDivisor->currentIndex()]);
-		pt.put("settings.useaux",ui->useAUX->checkState()==Qt::Checked);
-		pt.put("settings.usefda", ui->fastDataAccess->checkState() == Qt::Checked);
-		pt.put("settings.usesamplectr", ui->useSampleCtr->checkState() == Qt::Checked);
-		pt.put("settings.unsampledmarkers",ui->unsampledMarkers->checkState()==Qt::Checked);
-		pt.put("settings.sampledmarkersEEG",ui->sampledMarkersEEG->checkState()==Qt::Checked);
-		std::vector<std::string> channelLabels;
-		boost::algorithm::split(channelLabels,ui->channelLabels->toPlainText().toStdString(),boost::algorithm::is_any_of("\n"));
-		BOOST_FOREACH(std::string &v, channelLabels)
-			pt.add("channels.labels.label", v);
-	} catch(std::exception &e) {
-		QMessageBox::critical(this,"Error",(std::string("Could not prepare settings for saving: ")+=e.what()).c_str(),QMessageBox::Ok);
+		for (std::vector<std::pair<std::string, int>>::iterator it = ampData.begin(); it != ampData.end(); ++it) {
+			ss.clear();
+			ss << it->first << " (" << it->second << ")";
+			std::cout << it->first << std::endl;
+			auto x = ss.str(); // oh, c++...
+			qsl << QString(ss.str().c_str()); // oh, Qt...
+			m_psAmpSns.push_back(it->first);
+			m_pnUsableChannelsByDevice.push_back(it->second);
+		}
+		ui->availableDevices->addItems(qsl);
+		ChooseDevice(0);
 	}
 
-	// write to disk
-	try {
-		write_xml(filename, pt);
-	} catch(std::exception &e) {
-		QMessageBox::critical(this,"Error",(std::string("Could not write to config file: ")+=e.what()).c_str(),QMessageBox::Ok);
-	}
+	this->setWindowTitle("actiCHamp Connector");
+	ui->availableDevices->blockSignals(true);
+
 }
 
 
-// start/stop the ActiChamp connection
-void MainWindow::link() 
+void MainWindow::ChooseDevice(int which)
+{
+
+	if (!m_psAmpSns.empty())
+		ui->serialNumber->setText(QString(m_psAmpSns[which].c_str()));
+	ui->eegChannelCount->setMaximum(m_pnUsableChannelsByDevice[ui->availableDevices->currentIndex()]);
+
+}
+
+void MainWindow::UpdateChannelLabelsGUI(int n)
+{
+
+	if (m_bOverrideAutoUpdate)return;
+	UpdateChannelLabels();
+}
+
+
+void MainWindow::UpdateChannelLabels()
+{
+	if (!ui->overwriteChannelLabels->isChecked())return;
+	int nEeg = ui->eegChannelCount->value();
+	int nAux = ui->auxChannelCount->value();
+
+	std::string str;
+	std::vector<std::string> psEEGChannelLabels;
+	std::istringstream iss(ui->channelLabels->toPlainText().toStdString());
+	while (std::getline(iss, str, '\n'))
+		psEEGChannelLabels.push_back(str);
+	while (psEEGChannelLabels.size() > ui->eegChannelCount->value())
+		psEEGChannelLabels.pop_back();
+	ui->channelLabels->clear();
+	for (int i = 0; i < ui->eegChannelCount->value(); i++)
+	{
+		if (i < psEEGChannelLabels.size())
+			str = psEEGChannelLabels[i];
+		else
+			str = std::to_string(i + 1);
+		ui->channelLabels->appendPlainText(str.c_str());
+	}
+
+	for (int i = 0; i < nAux; i++)
+	{
+		str = "AUX_" + std::to_string(i + 1);
+		ui->channelLabels->appendPlainText(str.c_str());
+	}
+
+
+}
+
+void MainWindow::LoadConfig(const QString &filename) 
+{
+	QSettings pt(filename, QSettings::IniFormat);
+
+	ui->serialNumber->setText(pt.value("settings/serialNumber", "(enter manually or scan for devices)").toString());
+	ui->eegChannelCount->setValue(pt.value("settings/eegChannelCount", 32).toInt());
+	ui->auxChannelCount->setValue(pt.value("settings/auxChannelCount", 0).toInt());
+	ui->chunkSize->setValue(pt.value("settings/chunkSize", 10).toInt());
+	// TODO: make this a switch statement based on actual values
+	int nBaseSamplingRate = pt.value("settings/baseSamplingRate", 10000).toInt();
+	ui->baseSamplingRate->setCurrentIndex(getBaseSamplingRateIndex(nBaseSamplingRate));
+	int nSubSampleDivisor = pt.value("settings/subSampleDivisor", 20).toInt();
+	ui->nominalSamplingRate->setText((std::to_string(nBaseSamplingRate / nSubSampleDivisor)).c_str());
+	ui->subSampleDivisor->setCurrentIndex(getSubSampleDivisorIndex(nSubSampleDivisor));
+	//setMinChunk();
+	ui->fastDataAccess->setCheckState(pt.value("settings/useFda", false).toBool() ? Qt::Checked : Qt::Unchecked);
+	ui->useSampleCtr->setCheckState(pt.value("settings/useSampleCtr", false).toBool() ? Qt::Checked : Qt::Unchecked);
+	m_bUseActiveShield = pt.value("settings/activeShield", false).toBool();
+	ui->overwriteChannelLabels->setCheckState(pt.value("settings/overWrite", true).toBool() ? Qt::Checked : Qt::Unchecked);
+	ui->sampledMarkersEEG->setCheckState(pt.value("settings/sampledMarkersEEG", false).toBool() ? Qt::Checked : Qt::Unchecked);
+	ui->unsampledMarkers->setCheckState(pt.value("settings/unsampledMarkers", true).toBool() ? Qt::Checked : Qt::Unchecked);
+	ui->channelLabels->clear();
+	ui->channelLabels->setPlainText(pt.value("channels/labels").toStringList().join('\n'));
+	UpdateChannelLabels();
+	SetSamplingRate();
+
+}
+
+void MainWindow::SaveConfig(const QString& filename)
+{
+	QSettings pt(filename, QSettings::IniFormat);
+
+	pt.beginGroup("settings");
+	pt.setValue("serialNumber", ui->serialNumber->text());
+	pt.setValue("eegChannelCount", ui->eegChannelCount->value());
+	pt.setValue("auxChannelCount", ui->auxChannelCount->value());
+	pt.setValue("useSampleCtr", ui->useSampleCtr->checkState() == Qt::Checked);
+	pt.setValue("useFda", ui->fastDataAccess->checkState() == Qt::Checked);
+	pt.setValue("chunkSize", ui->chunkSize->value());
+	pt.setValue("baseSamplingRate", m_pnBaseSamplingRates[ui->baseSamplingRate->currentIndex()]);
+	pt.setValue("subSampleDivisor", m_pnSubSampleDivisors[ui->subSampleDivisor->currentIndex()]);
+	pt.setValue("unsampledMarkers", ui->unsampledMarkers->checkState() == Qt::Checked);
+	pt.setValue("sampledMarkersEEG", ui->sampledMarkersEEG->checkState() == Qt::Checked);
+	pt.setValue("overWrite", ui->overwriteChannelLabels->checkState() == Qt::Checked);
+	pt.endGroup();
+
+	pt.beginGroup("channels");
+	pt.setValue("labels", ui->channelLabels->toPlainText().split('\n'));
+	pt.endGroup();
+}
+
+void MainWindow::AmpSetup(t_AmpConfiguration ampConfiguration)
+{
+	m_LibTalker.setUseTriggers(ampConfiguration.m_bSampledMarkersEEG || ampConfiguration.m_bUnsampledMarkers);
+	m_LibTalker.setExcludeTriggersFromOutput(!ui->sampledMarkersEEG->isChecked());
+	m_LibTalker.setRequestedEEGChannelCnt(ampConfiguration.m_psEegChannelLabels.size());
+	m_LibTalker.setRequestedAuxChannelCnt(ampConfiguration.m_psAuxChannelLabels.size());
+	m_LibTalker.setBaseSamplingRate((float)ampConfiguration.m_nBaseSamplingRate);
+	m_LibTalker.setSubSampleDivisor((float)ampConfiguration.m_nSubSampleDivisor);
+	m_LibTalker.setUseFDA(ampConfiguration.m_bFDA);
+	m_LibTalker.setUseSampleCtr(ampConfiguration.m_bUseSampleCtr);
+	m_LibTalker.setUseActiveShield(false);
+	m_LibTalker.Setup();
+}
+
+void MainWindow::ToggleGUIEnabled(bool bEnabled)
+{
+	if (bEnabled)
+	{
+		ui->channelLabels->setEnabled(true);
+		ui->overwriteChannelLabels->setEnabled(true);
+		ui->deviceGroup->setEnabled(true);
+		ui->scanGroup->setEnabled(true);
+		ui->channelGroup->setEnabled(true);
+		ui->linkButton->setEnabled(true);
+		ui->linkButton->setText("Link");
+	}
+	else
+	{
+		ui->channelLabels->setEnabled(false);
+		ui->overwriteChannelLabels->setEnabled(false);
+		ui->deviceGroup->setEnabled(false);
+		ui->scanGroup->setEnabled(false);
+		ui->channelGroup->setEnabled(false);
+		ui->linkButton->setEnabled(true);
+		ui->linkButton->setText("Unlink");
+
+	}
+}
+
+void MainWindow::Link() 
 {
 	bool bSuccess = true;
 	if (m_ptReadThread) 
 	{
-		// === perform unlink action ===
-		try {
-			m_bStop_ = true;
+		try 
+		{
+			m_bStop = true;
 			m_ptReadThread->join();
 			m_ptReadThread.reset();
-			//m_LibTalker.Close();
-		} catch(std::exception &e) {
+			
+		} 
+		catch(std::exception &e) 
+		{
 			QMessageBox::critical(this,"Error",(std::string("Could not stop the background processing: ")+=e.what()).c_str(),QMessageBox::Ok);
 			return;
 		}
-
-		// indicate that we are now successfully unlinked
+		ToggleGUIEnabled(true);
 		ui->linkButton->setText("Link");
-	} else {
-		// === perform link action ===
-
-		try {
-			std::vector<std::string> channelLabels;
-			boost::algorithm::split(channelLabels, ui->channelLabels->toPlainText().toStdString(), boost::algorithm::is_any_of("\n"));
+	} 
+	else 
+	{
+		try 
+		{
 			// get the UI parameters...
-			m_nDeviceNumber = ui->deviceNumber->value();
+			t_AmpConfiguration ampConfiguration;
+			ampConfiguration.m_sSerialNumber = ui->serialNumber->text().toStdString();
+			ampConfiguration.m_bUseActiveShield = m_bUseActiveShield;
+			ampConfiguration.m_bFDA = ui->fastDataAccess->checkState() == Qt::Checked;
+			ampConfiguration.m_bUseSampleCtr = ui->useSampleCtr->checkState() == Qt::Checked;
+			ampConfiguration.m_nChunkSize = ui->chunkSize->value();
+			ampConfiguration.m_nBaseSamplingRate = ui->baseSamplingRate->currentText().toInt();
+			ampConfiguration.m_nSubSampleDivisor = ui->subSampleDivisor->currentText().toInt();
+			SetSamplingRate();
+			std::vector<std::string> psChannelLabels;
+			std::string str;
+			std::istringstream iss(ui->channelLabels->toPlainText().toStdString());
+			while (std::getline(iss, str, '\n'))
+				psChannelLabels.push_back(str);
+
+			std::vector<std::string> psEegChannelLabels;
+			std::vector<std::string> psAuxChannelLabels;
+			int i = 0;
+			for (std::vector<std::string>::iterator it = psChannelLabels.begin();
+				it < psChannelLabels.end();
+				++it)
+			{
+				if (i < ui->eegChannelCount->value())
+					psEegChannelLabels.push_back(*it);
+				else
+					psAuxChannelLabels.push_back(*it);
+				i++;
+			}
+			ampConfiguration.m_psEegChannelLabels = psEegChannelLabels;
+			ampConfiguration.m_psAuxChannelLabels = psAuxChannelLabels;
+			ampConfiguration.m_bUnsampledMarkers = ui->unsampledMarkers->checkState() == Qt::Checked;
+			ampConfiguration.m_bSampledMarkersEEG = ui->sampledMarkersEEG->checkState() == Qt::Checked;
 
 			this->setWindowTitle(QString("Attempting to connect"));
 			this->setCursor(Qt::WaitCursor);
-			m_LibTalker.Connect(m_nDeviceNumber);
-
-			m_nEEGChannelCount = ui->channelCount->value();
-			int nEEGChannelCntFromAmp = m_LibTalker.getEEGChannelCnt();
-			if (m_nEEGChannelCount > nEEGChannelCntFromAmp)
-			{
-				QMessageBox::warning(this, "Cannot proceed", "You have selected more channels than are available on this device");
-				this->setCursor(Qt::ArrowCursor);
-				return;
-			}
-			if (m_nEEGChannelCount != channelLabels.size())
-			{
-				QMessageBox::warning(this, "Cannot proceed", "EEG channel labels list length does not equal number of selected channels");
-				this->setCursor(Qt::ArrowCursor);
-				return;
-			}
-
-			m_LibTalker.setUseTriggers(ui->sampledMarkersEEG->isChecked() || ui->unsampledMarkers->isChecked());
-			m_LibTalker.setExcludeTriggersFromOutput(!ui->sampledMarkersEEG->isChecked());
-			m_LibTalker.setRequestedEEGChannelCnt(m_nEEGChannelCount);
-			m_nBaseSamplingRate = m_pnBaseSamplingRates[ui->baseSamplingRate->currentIndex()];
-			m_LibTalker.setBaseSamplingRate((float)m_nBaseSamplingRate);
-			m_nSubSampleDivisor = m_pnSubSampleDivisors[ui->subSampleDivisor->currentIndex()];			
-			m_LibTalker.setSubSampleDivisor((float)m_nSubSampleDivisor);
-			m_nSamplingRate = m_nBaseSamplingRate / m_nSubSampleDivisor;
-			m_bUseAUX = ui->useAUX->checkState() == Qt::Checked;
-			m_LibTalker.setUseAux(m_bUseAUX);
-			m_bUseFDA = ui->fastDataAccess->checkState() == Qt::Checked;
-			m_LibTalker.setUseFDA(m_bUseFDA);
-			m_bUseSampleCtr = ui->useSampleCtr->checkState() == Qt::Checked;
-			m_LibTalker.setUseSampleCtr(m_bUseSampleCtr);
-			m_bSampledMarkersEEG = ui->sampledMarkersEEG->checkState() == Qt::Checked;
-			m_bUnsampledMarkers = ui->unsampledMarkers->checkState() == Qt::Checked;
-			m_LibTalker.setUseActiveShield(false);			
-			m_LibTalker.Setup();
-			m_nChunkSize = ui->chunkSize->value();
+			m_LibTalker.Connect(ampConfiguration.m_sSerialNumber);
+			AmpSetup(ampConfiguration);
 
 			this->setCursor(Qt::ArrowCursor);
 			this->setWindowTitle("actiCHamp Connector");
 			// start reader thread
-			m_bStop_ = false;
-			m_ptReadThread.reset(new std::thread(&MainWindow::read_thread,this, channelLabels));
+			m_bStop = false;
+			m_ptReadThread.reset(new std::thread(&MainWindow::ReadThread,this, ampConfiguration));
 		}
+		catch(std::exception &e) 
+		{
 
-		catch(std::exception &e) {
-
-			// generate error message
 			std::string msg = e.what();
 			QMessageBox::critical(this,"Error",("Could not initialize the actiCHamp: " + msg).c_str(),QMessageBox::Ok);	
 			this->setCursor(Qt::ArrowCursor);
+			ToggleGUIEnabled(true);
 			return;
 		}
-
-		// done, all successful
+		ToggleGUIEnabled(false);
 		ui->linkButton->setText("Unlink");
 	}
 }
@@ -318,13 +428,16 @@ void MainWindow::link()
 
 
 // background data reader thread
-void MainWindow::read_thread(const std::vector<std::string>& channelLabels) 
+void MainWindow::ReadThread(t_AmpConfiguration ampConfiguration) 
 {
-	//int res = SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
-	int nEnabledChannelCnt = m_nEEGChannelCount + ((m_bUseAUX) ? 8 : 0);
+	int res = SetPriorityClass(GetCurrentThread(), HIGH_PRIORITY_CLASS);
+	//int nEnabledChannelCnt = m_nEEGChannelCount + ((m_bUseAUX) ? 8 : 0);
+	int nChannelLabelCnt = ampConfiguration.m_psEegChannelLabels.size() + ampConfiguration.m_psAuxChannelLabels.size();
 	int nExtraEEGChannelCnt = 0;
-	if (m_bSampledMarkersEEG) nExtraEEGChannelCnt+=1;
-	if (m_bUseSampleCtr) nExtraEEGChannelCnt += 1;
+	//int nTriggerIdx = nChannelLabelCnt;
+	//int nSampleCounterIdx = nTriggerIdx + 1;
+	if (ampConfiguration.m_bSampledMarkersEEG) nExtraEEGChannelCnt+=1;
+	if (ampConfiguration.m_bUseSampleCtr) nExtraEEGChannelCnt += 1;
 
 	try
 	{
@@ -332,43 +445,40 @@ void MainWindow::read_thread(const std::vector<std::string>& channelLabels)
 		lsl::stream_outlet* poutMarkerOutlet = NULL;
 		std::cout << std::string("actiCHamp" + m_LibTalker.getSerialNumber());
 		std::cout << "EEG";
-		std::cout << nEnabledChannelCnt + nEnabledChannelCnt;
+		std::cout << nChannelLabelCnt + nExtraEEGChannelCnt;
 		std::cout << (double)m_nSamplingRate;
 		std::cout << lsl::cf_float32;
 		std::cout << m_LibTalker.getSerialNumber();
 		lsl::stream_info infoData("actiCHamp-" + m_LibTalker.getSerialNumber(),
 			"EEG",
-			nEnabledChannelCnt + nExtraEEGChannelCnt,
+			nChannelLabelCnt + nExtraEEGChannelCnt,
 			(double)m_nSamplingRate,
 			lsl::cf_float32,
 			m_LibTalker.getSerialNumber());
 
 
 		lsl::xml_element channels = infoData.desc().append_child("channels");
-
-
-		for (int i = 0; i < channelLabels.size(); i++)
+		for (int i = 0; i < ampConfiguration.m_psEegChannelLabels.size(); i++)
 		{
 			channels.append_child("channel")
-				.append_child_value("label", channelLabels[i].c_str())
+				.append_child_value("label", ampConfiguration.m_psEegChannelLabels[i].c_str())
 				.append_child_value("type", "EEG")
 				.append_child_value("unit", "microvolts");
 		}
-		if (m_bUseAUX)
-			for (int i = 0; i < 8; i++)
-			{
-				channels.append_child("channel")
-					.append_child_value("label", ("AUX_" + std::to_string(i + 1)).c_str())
-					.append_child_value("type", "AUX")
-					.append_child_value("unit", "microvolts");
-			}
-		if (m_bSampledMarkersEEG)
+		for (int i = 0; i < ampConfiguration.m_psAuxChannelLabels.size(); i++)
+		{
+			channels.append_child("channel")
+				.append_child_value("label", ampConfiguration.m_psAuxChannelLabels[i].c_str())
+				.append_child_value("type", "AUX")
+				.append_child_value("unit", "microvolts");
+		}
+		if (ampConfiguration.m_bSampledMarkersEEG)
 			channels.append_child("channel")
 			.append_child_value("label", "Markers")
 			.append_child_value("type", "Markers")
 			.append_child_value("unit", "");
 
-		if (m_bUseSampleCtr)
+		if (ampConfiguration.m_bUseSampleCtr)
 			channels.append_child("channel")
 			.append_child_value("label", "SampleCounter")
 			.append_child_value("type", "SampleCounter")
@@ -405,7 +515,7 @@ void MainWindow::read_thread(const std::vector<std::string>& channelLabels)
 			lsl::cf_string,
 			m_LibTalker.getSerialNumber());
 
-		if (m_bUnsampledMarkers)
+		if (ampConfiguration.m_bUnsampledMarkers)
 		{
 			infoMarkers.desc().append_child("channels")
 				.append_child("channel")
@@ -425,24 +535,20 @@ void MainWindow::read_thread(const std::vector<std::string>& channelLabels)
 			poutMarkerOutlet = new lsl::stream_outlet(infoMarkers);
 
 		}
-
-		// do data acquistion
 		std::vector<float> vfDataBufferMultiplexed;
 		std::vector<int> vnTriggers;
 		int nMarker;
 		int nPreviousMarker = -1;
-		int32_t nBufferSize = m_nChunkSize * m_LibTalker.getSampleSize();
+		int32_t nBufferSize = ampConfiguration.m_nChunkSize * m_LibTalker.getSampleSize();
 		BYTE* buffer = NULL;
 		buffer = new BYTE[nBufferSize];
 		int64_t nSampleCnt;
 		double dNow;
 		int nSamplesPulled = 0;
 		dNow = lsl::local_clock();
-		//vfDataBufferMultiplexed.clear();
-		vfDataBufferMultiplexed.resize(m_nChunkSize * (nEnabledChannelCnt + nExtraEEGChannelCnt));
-		//vnTriggers.clear();
-		vnTriggers.resize(m_nChunkSize);
-		while (!m_bStop_)
+		vfDataBufferMultiplexed.resize(ampConfiguration.m_nChunkSize * (nChannelLabelCnt + nExtraEEGChannelCnt));
+		vnTriggers.resize(ampConfiguration.m_nChunkSize);
+		while (!m_bStop)
 		{
 
 			nSampleCnt = m_LibTalker.PullAmpData(buffer, nBufferSize, vfDataBufferMultiplexed, vnTriggers);
@@ -453,7 +559,7 @@ void MainWindow::read_thread(const std::vector<std::string>& channelLabels)
 			}
 			nSamplesPulled += nSampleCnt;
 
-			if (m_bUnsampledMarkers)
+			if (ampConfiguration.m_bUnsampledMarkers)
 			{
 				for (int s = 0; s < nSampleCnt; s++)
 				{
@@ -478,10 +584,7 @@ void MainWindow::read_thread(const std::vector<std::string>& channelLabels)
 	catch (std::exception & e)
 	{
 		std::string msg = e.what();
-		//QMessageBox::critical(this, "Error", ("Error in acquisition loop: " + msg).c_str(), QMessageBox::Ok);
 	}
-	// exit gracefully
-	//if(poutMarkerOutlet !=NULL)
 
 }
 
