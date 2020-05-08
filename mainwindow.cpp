@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent, const char* config_file): QMainWindow(pa
 {
 	m_AppVersion.Major = 1;
 	m_AppVersion.Minor = 13;
-	m_AppVersion.Bugfix = 0;
+	m_AppVersion.Bugfix = 1;
 
 	ui->setupUi(this);
 	m_bUseActiveShield = false;
@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent, const char* config_file): QMainWindow(pa
 	QObject::connect(ui->subSampleDivisor, SIGNAL(currentIndexChanged(int)), this, SLOT(SetSamplingRate()));
 	QObject::connect(ui->actionVersions, SIGNAL(triggered()), this, SLOT(VersionsDialog()));
 	QObject::connect(ui->refreshDevices, SIGNAL(clicked()), this, SLOT(RefreshDevices()));
-	QObject::connect(ui->eegChannelCount, SIGNAL(valueChanged(int)), this, SLOT(UpdateChannelLabelsGUI(int)));
+	QObject::connect(ui->eegChannelCount, SIGNAL(valueChanged(int)), this, SLOT(UpdateChannelLabelsEEG(int)));
 	QObject::connect(ui->auxChannelCount, SIGNAL(valueChanged(int)), this, SLOT(UpdateChannelLabelsGUI(int)));
 	QObject::connect(ui->availableDevices, SIGNAL(currentIndexChanged(int)), this, SLOT(ChooseDevice(int)));
 
@@ -212,6 +212,13 @@ void MainWindow::ChooseDevice(int which)
 
 }
 
+void MainWindow::UpdateChannelLabelsEEG(int n)
+{
+
+	if (m_bOverrideAutoUpdate)return;
+	UpdateChannelLabels();
+}
+
 void MainWindow::UpdateChannelLabelsGUI(int n)
 {
 
@@ -223,15 +230,27 @@ void MainWindow::UpdateChannelLabelsGUI(int n)
 void MainWindow::UpdateChannelLabels()
 {
 	if (!ui->overwriteChannelLabels->isChecked())return;
+	
 	int nEeg = ui->eegChannelCount->value();
 	int nAux = ui->auxChannelCount->value();
 
 	std::string str;
 	std::vector<std::string> psEEGChannelLabels;
 	std::istringstream iss(ui->channelLabels->toPlainText().toStdString());
+	int nEegChannelCount;
 	while (std::getline(iss, str, '\n'))
 		psEEGChannelLabels.push_back(str);
-	while (psEEGChannelLabels.size() > ui->eegChannelCount->value())
+	nEegChannelCount = ui->eegChannelCount->value();
+
+	for (auto it = psEEGChannelLabels.begin(); it != psEEGChannelLabels.end();)
+	{
+		if ((*(it)).find("AUX")!=std::string::npos)
+			it = psEEGChannelLabels.erase(it);
+		else
+			++it;
+	}
+
+	while (psEEGChannelLabels.size() > nEegChannelCount)
 		psEEGChannelLabels.pop_back();
 	ui->channelLabels->clear();
 	for (int i = 0; i < ui->eegChannelCount->value(); i++)

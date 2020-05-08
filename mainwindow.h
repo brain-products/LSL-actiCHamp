@@ -67,6 +67,7 @@ private slots:
     void VersionsDialog();
     void UpdateChannelLabels();
     void RefreshDevices();
+    void UpdateChannelLabelsEEG(int);
     void UpdateChannelLabelsGUI(int);
     void ChooseDevice(int which);
 

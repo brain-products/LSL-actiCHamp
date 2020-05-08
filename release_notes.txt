@@ -1,3 +1,7 @@
+actiCHamp LSL Connector v1.13.1
+-BUGFIX: channel label typing bug
+-BUGFIX: aux label update bug
+
 actiCHamp LSL Connector v1.13.0
 -added device scan option
 -changed from AUX channels on/off to 0-8

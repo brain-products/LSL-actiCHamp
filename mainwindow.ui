@@ -108,6 +108,9 @@ PO10 </string>
            <property name="toolTip">
             <string>This must match the number of entries in the channel list</string>
            </property>
+           <property name="keyboardTracking">
+            <bool>false</bool>
+           </property>
            <property name="minimum">
             <number>1</number>
            </property>
@@ -133,6 +136,9 @@ PO10 </string>
           <widget class="QSpinBox" name="auxChannelCount">
            <property name="toolTip">
             <string>Number of requested aux channels. </string>
+           </property>
+           <property name="keyboardTracking">
+            <bool>false</bool>
            </property>
            <property name="maximum">
             <number>8</number>
