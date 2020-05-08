@@ -56,7 +56,7 @@ void MainWindow::VersionsDialog()
 	ss << "Amplifier_LIB: " << LIBVERSIONSTREAM(libVersion) << "\n" <<
 		"lsl protocol: " << LSLVERSIONSTREAM(lslProtocolVersion) << "\n" <<
 		"liblsl: " << LSLVERSIONSTREAM(lslLibVersion) << "\n" <<
-		"App: " << APPVERSIONSTREAM(m_AppVersion) << "_beta";
+		"App: " << APPVERSIONSTREAM(m_AppVersion);
 	QMessageBox::information(this, "Versions", ss.str().c_str(), QMessageBox::Ok);
 }
 
@@ -546,7 +546,7 @@ void MainWindow::ReadThread(t_AmpConfiguration ampConfiguration)
 				.append_child_value("manufacturer", "Brain Products");
 
 			infoMarkers.desc().append_child("versions")
-				.append_child_value("Amplifier_LIB", ssLib.str() + "_beta")
+				.append_child_value("Amplifier_LIB", ssLib.str())
 				.append_child_value("lsl_protocol", ssProt.str())
 				.append_child_value("liblsl", ssLSL.str())
 				.append_child_value("App", ssApp.str());
