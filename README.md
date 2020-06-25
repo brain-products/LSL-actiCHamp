@@ -57,7 +57,7 @@ See above. Note that this is a read-only field. It will update when the Base Sam
 
 ## LSL Trigger Output Style
 
-These check boxes determine the way that LSL handles device triggers. Please see the file [explanation_of_trigger_marker_types.pdf]( https://github.com/brain-products/LSL-LiveAmp/blob/master/explanation_of_trigger_marker_types.pdf) for more details.
+These check boxes determine the way that LSL handles device triggers.
 
 Note that it is possible to enable neither, one of, or both trigger output styles simultaneously. They are not mutually exclusive.
 
@@ -72,6 +72,10 @@ If the STE box is connected and the STE Out Mode is set to 'Sync' there will be 
 ### EEG Channel
 
 If this box is checked, extra channels will be added to the EEG/Bipolar/AUX/ACC stream corresponding to the requested trigger outputs. Rather than unsampled markers, these channels will output -1 if no trigger is available, else the value corresponding to the triggers in; and, in the case of the STE box in 'Sync' mode, the sync stream presented at the DSub output of the STE box. 
+
+### Further Information
+
+Please see the file [explanation_of_trigger_marker_types.pdf]( https://github.com/brain-products/LSL-LiveAmp/blob/master/explanation_of_trigger_marker_types.pdf) for more details.
 
  ## Link
 
