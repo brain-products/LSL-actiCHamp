@@ -57,7 +57,7 @@ See above. Note that this is a read-only field. It will update when the Base Sam
 
 ## LSL Trigger Output Style
 
-These check boxes determine the way that LSL handles device triggers.
+These check boxes determine the way that the app handles device triggers in LSL.
 
 Note that it is possible to enable neither, one of, or both trigger output styles simultaneously. They are not mutually exclusive.
 
