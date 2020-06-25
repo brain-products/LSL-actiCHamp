@@ -1,7 +1,7 @@
 # LSL-actiCHamp
 LSL connector for the actiCHamp (plus) device from Brain Products.
 
-To download, please click the Release tab above for the latest versions.
+To download, please click the 'Latest release' link to the right for the latest versions.
 
 Please note that you may need to install the Microsoft C++ redistributable packages ([here](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads)) in order to run the executables.
 
@@ -25,7 +25,7 @@ Make sure that you have correctly installed the drivers for your amplifier, and 
 
 If you know the serial number of the amplifier you want to connect with, you may enter it manually in the 'Device Serial Number' field. Otherwise, you can scan for amplifiers using the 'Scan' button at the bottom of the GUI. After scanning, the'Available Devices' combo box will be populated with all available devices. The 'Device Serial Number' field will automatically be filled with the number of the first device found. Whichever device is referred to here will be the device that is connected with at the 'Link' action. 
 
-### Number of EEG Channles
+### Number of EEG Channels
 
 You can adjust the number of EEG channels that the device enables during Link action. Note that if the 'Overwrite on Channel Change' box is checked, changing these values will change the labels in the Channel Labels text box on the left side of the GUI. See the section on Channel Labels below for more information. The maximum number of available channels depends on the number of modules on the amplifier.
 
@@ -75,19 +75,19 @@ If this box is checked, extra channels will be added to the EEG/Bipolar/AUX/ACC 
 
  ## Link
 
- When pressed, the Link button will attempt to connect to the device specified in the 'Device Number' field. This may take a few moments due to Bluetooth handshaking. When complete, the button text will change to 'Unlink' and all other GUI widgets will be disabled. An error message will pop up if no devices are available.
+ When pressed, the Link button will attempt to connect to the device specified in the 'Device Serial Number' field. When complete, the button text will change to 'Unlink' and all other GUI widgets will be disabled. An error message will pop up if no devices are available.
 
- When the Connector is linked to the LiveAmp, LSL streams will be created according to the settings set in the GUI. Please note that settings can be saved in a configuration file (see below) for ease of repetition.
+ When the Connector is linked to the actiCHamp, LSL streams will be created according to the settings set in the GUI. Please note that settings can be saved in a configuration file (see below) for ease of repetition.
 
 ## Scan For Devices
 
-When 'Scan' is pressed, the app will search for available LiveAmps. When 1 or more LiveAmps is found, the Serial Numbers of these devices will populate the 'Available Devices' combo box. The first device found will automatically be placed in the 'Device Number' field. When devices are available in the 'Available Devices' box, the user may choose from the available devices in the combo box by interacting with the combo box itself. The chosen device will be forwarded to the 'Device Number' field. If the selected device is unavailable at 'Link', the app will notify the user with an error message. The enumerated devices will also report the type of LiveAmp found (8, 16, 32, or 64 channel).
+When 'Scan' is pressed, the app will search for available LiveAmps. When 1 or more actiCHamps is found, the Serial Numbers of these devices will populate the 'Available Devices' combo box. The first device found will automatically be placed in the 'Device Serial Number' field. When devices are available in the 'Available Devices' box, the user may choose from the available devices in the combo box by interacting with the combo box itself. The chosen device will be forwarded to the 'Device Number' field. If the selected device is unavailable at 'Link', the app will notify the user with an error message.
 
 The LiveAmp device has a simulator mode which can be activated with the 'Use Simulator' checkbox. This will create 
 
 ## Configuration file
 
-The configuration settings can be saved to a .cfg file (see File / Save Configuration) and subsequently loaded from such a file (via File / Load Configuration). Importantly, the program can be started with a command-line argument of the form "LiveAmp.exe -c myconfig.cfg", which allows to load the config automatically at start-up. The recommended procedure to use the app in experiments is to make a shortcut on the experimenter's desktop which points to a previously saved configuration customized to the study being recorded to minimize the chance of operator error.
+The configuration settings can be saved to a .cfg file (see File / Save Configuration) and subsequently loaded from such a file (via File / Load Configuration). Importantly, the program can be started with a command-line argument of the form "actiCHamp.exe -c myconfig.cfg", which allows to load the config automatically at start-up. The recommended procedure to use the app in experiments is to make a shortcut on the experimenter's desktop which points to a previously saved configuration customized to the study being recorded to minimize the chance of operator error.
 
 ## Active Shielding
 
@@ -101,13 +101,13 @@ It is very important that you understand the consequences of activating this opt
 
 If the `Overwrite Channel Labels` box is checked, the channel label field will automatically update when you change the number of channels. The chosen channel label is simply an integer number corresponding to the channel number. You can change the channel labels by editing the `Channel Labels` text field directly.
 
-The latest version of the LiveAmp Connector uses [INI](https://en.wikipedia.org/wiki/INI_file) style configuration files (see above) to store preferred settings between sessions. Easier and less error prone than adjusting channel labels in the App's GUI, is to set the channel labels by editing a config file in a text editor and then loading the updated config file. To do so, in the chosen config file simply create a [section](https://en.wikipedia.org/wiki/INI_file#Sections) called `channels` then create a [key](https://en.wikipedia.org/wiki/INI_file#Keys_(properties)) called `labels` with the corresponding labels for each channel separated by commas. For example, a 32 channel 10-20 layout may look like this:
+The latest version of the actiCHamp Connector uses [INI](https://en.wikipedia.org/wiki/INI_file) style configuration files (see above) to store preferred settings between sessions. Easier and less error prone than adjusting channel labels in the App's GUI, is to set the channel labels by editing a config file in a text editor and then loading the updated config file. To do so, in the chosen config file simply create a [section](https://en.wikipedia.org/wiki/INI_file#Sections) called `channels` then create a [key](https://en.wikipedia.org/wiki/INI_file#Keys_(properties)) called `labels` with the corresponding labels for each channel separated by commas. For example, a 32 channel 10-20 layout may look like this:
 
 `[channels]`
 `labels=Fp1, Fp2, F7, F3, Fz, F4, F8, FC5, FC1, FC2, FC6, T7, C3, Cz, C4, T8, TP9, CP5, CP1, CP2, CP6, TP10, P7, P3, Pz, P4, P8, PO9, O1, Oz, O2, PO10`
 
 The LSL channel meta-data corresponds to the conventions of the XDF file format. These are described [here](https://github.com/sccn/xdf/wiki/EEG-Meta-Data).
 
-## Loading channel label files
+## Loading Channel Label Files
 
 Python users may automatically insert channel labels from a .bvef file into an LSL config file. To do so, please use the free utility [BVEF2lslconfig](https://github.com/brain-products/BVEF2lslconfig). You can find many electrode position files with channel labels for common cap configurations on the Brain Products website [here](https://www.brainproducts.com/downloads.php?kid=44). 
