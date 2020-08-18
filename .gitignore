@@ -7,3 +7,6 @@ actiCHamp/Release/
 *.exe
 *.bit
 *.aps
+!.gitignore
+!actiCHampLib/*/*/*.dll
+!actiCHampLib/*/*/*.bit
