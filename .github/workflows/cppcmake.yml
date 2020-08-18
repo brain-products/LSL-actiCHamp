@@ -1,0 +1,103 @@
+name: C/C++ CI
+
+on:
+  push:
+    tags:
+    - v*.*
+    branches:
+    - ci_devel
+    
+env:
+  LSL_URL: 'https://github.com/sccn/liblsl/releases/tag/'
+  LSL_RELEASE_PREFIX: ''
+  LSL_TAG: '1.13.1'
+  LSL_RELEASE: '1.13.1'
+  LSL_RELEASE_SUFFIX: ''
+  APP_VERSION: 'v1.13.2'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        platform:
+        - Win32
+        - Win64
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Qt32 (Windows)
+      uses: jurplel/install-qt-action@v2
+      if: matrix.platform == 'Win32'
+      with:
+        arch: win32_msvc2019
+        version: 5.15.0
+        
+    - name: Install Qt64 (Windows)
+      uses: jurplel/install-qt-action@v2
+      if: matrix.platform == 'Win64'
+      with:
+        version: 5.15.0
+      
+    - name: Get LSL 32
+      if: matrix.platform == 'Win32'
+      run: |
+           Invoke-WebRequest -Uri https://github.com/sccn/liblsl/releases/download/1.13.1/liblsl-1.13.1-Win32.zip -o liblsl.7z
+           7z x liblsl.7z -oLSL
+    
+    - name: Get LSL 64
+      if: matrix.platform == 'Win64'
+      run: |
+           Invoke-WebRequest -Uri https://github.com/sccn/liblsl/releases/download/1.13.1/liblsl-1.13.1-Win64.zip -o liblsl.7z
+           7z x liblsl.7z -oLSL
+     
+    - name: configure cmake 32
+      if: matrix.platform == 'Win32'
+      run: |
+           cmake -S . -B build -Dlsl_DIR=LSL/share/LSL -A Win32
+           
+    - name: configure cmake 64
+      if: matrix.platform == 'Win64'
+      run: |
+           cmake -S . -B build -Dlsl_DIR=LSL/share/LSL -A x64
+        
+    - name: make
+      run: |
+           cmake --build build --config Release -j --target install
+           
+    - name: package
+      run: |
+           cmake --build build --config Release -j --target package
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: pkg-actiCHamp-v1.13.2-${{ matrix.platform }}
+        path: build/*.7z
+
+    
+    
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    
+    - name: Download Artifacts
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/download-artifact@v2-preview
+      # By not specifying with: name:, it defaults to downloading all artifacts.
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        # tag_name: ${{ github.ref }}  # ${{ github.ref }} is default
+        name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+        # body_path: CHANGELOG.txt
+        files: pkg-*/*

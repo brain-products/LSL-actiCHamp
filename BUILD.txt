@@ -1,0 +1,20 @@
+To build the app CMake >= 3.5 is required.
+
+Dependencies:
+	Qt5 (free: https://www.qt.io/offline-installers)
+	LSL (opensource: https://github.com/sccn/liblsl/releases/tag/1.13.1)
+
+
+Locations of Qt5 and LSL are to be passed as command line arguments to the invokation of CMake. The generator must match the Qt5 distribution. For example:
+
+>> cmake -S . -B build64 -DQt5_DIR=C:\Qt\5.15.0\msvc2019_64\lib\cmake\Qt5 -Dlsl_DIR=C:\Users\david.medine\LSL\x64\share\LSL -G "Visual Studio 16 2019" -A x64
+
+or (for 32 bit):
+
+>> cmake -S . -B build32 -DQt5_DIR=C:\Qt\5.15.0\msvc2019\lib\cmake\Qt5 -Dlsl_DIR=C:\Users\david.medine\LSL\Win32\share\LSL -G "Visual Studio 16 2019" -A Win32
+
+In practice the flags -DQt5_DIR and -Dlsl_DIR must point to the distribution's cmake files.
+
+Packaging will be done automatically via github actions. To build from the command line:
+
+>> cmake --build build64 --config release --target install
