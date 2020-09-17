@@ -1,3 +1,6 @@
+v1.13.1.1
+-build number just for CI integration, no new features or bug fixes
+
 actiCHamp LSL Connector v1.13.1
 -BUGFIX: channel label typing bug
 -BUGFIX: aux label update bug
