@@ -10,10 +10,10 @@ on:
 env:
   LSL_URL: 'https://github.com/sccn/liblsl/releases/tag/'
   LSL_RELEASE_PREFIX: ''
-  LSL_TAG: '1.13.1'
-  LSL_RELEASE: '1.13.1'
+  LSL_TAG: '1.13.2'
+  LSL_RELEASE: '1.13.2'
   LSL_RELEASE_SUFFIX: ''
-  APP_VERSION: 'v1.13.1.1'
+  APP_VERSION: 'v1.13.2'
 
 jobs:
   build:

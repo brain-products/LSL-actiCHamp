@@ -537,14 +537,14 @@ int64_t LibTalker::PullAmpData(BYTE* buffer, int nBufferSize, std::vector<float>
 	return nSampleCnt;
 }
 
-//bool LibTalker::CheckFDA(void)
-//{
-//	int32_t nFDA = 0;
-//	int res = 0;
-//	res = ampGetProperty(m_Handle, PG_DEVICE, 0, DPROP_B32_FastDataAccess, &nFDA, sizeof(nFDA));
-//	if (res != AMP_OK)
-//		Error("Setup error getting FDA option: ", res);
-//	return (nFDA == 1) ? true : false;
-//	
-//}
+bool LibTalker::CheckFDA(void)
+{
+	int32_t nFDA = 0;
+	int res = 0;
+	res = ampGetProperty(m_Handle, PG_DEVICE, 0, DPROP_B32_FastDataAccess, &nFDA, sizeof(nFDA));
+	if (res != AMP_OK)
+		Error("Setup error getting FDA option: ", res);
+	return (nFDA == 1) ? true : false;
+	
+}
 

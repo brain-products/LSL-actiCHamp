@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent, const char* config_file): QMainWindow(pa
 {
 	m_AppVersion.Major = 1;
 	m_AppVersion.Minor = 13;
-	m_AppVersion.Bugfix = 1;
+	m_AppVersion.Bugfix = 2;
 
 	ui->setupUi(this);
 	m_bUseActiveShield = false;
@@ -461,7 +461,7 @@ void MainWindow::ReadThread(t_AmpConfiguration ampConfiguration)
 	try
 	{
 		// for debugging:
-//		bool bFDA = m_LibTalker.CheckFDA();
+		bool bFDA = m_LibTalker.CheckFDA();
 
 		// setup LSL
 		lsl::stream_outlet* poutMarkerOutlet = NULL;
