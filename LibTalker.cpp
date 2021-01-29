@@ -273,8 +273,6 @@ void LibTalker::Connect(const std::string& sSerialNumber)
 		if (nChannelType == CT_TRG)
 			m_nTriggerIdx = i;
 	}
-		
-
 }
 
 void LibTalker::EnableChannels()
@@ -340,6 +338,10 @@ void LibTalker::Setup()
 	t_RecordingMode rmNormal = RM_NORMAL;
 	res = ampSetProperty(m_Handle, PG_DEVICE, 0, DPROP_I32_RecordingMode, &rmNormal, sizeof(rmNormal));
 	float fVal = m_fBaseSamplingRate;
+	int32_t nUseFDA = (m_bUseFDA) ? 1 : 0;
+	res = ampSetProperty(m_Handle, PG_DEVICE, 0, DPROP_B32_FastDataAccess, &nUseFDA, sizeof(nUseFDA));
+	if (res != AMP_OK)
+		Error("Setup error setting FDA option: ", res);
 	res = ampSetProperty(m_Handle, PG_DEVICE, 0, DPROP_F32_BaseSampleRate, &fVal, sizeof(fVal));
 	if (res != AMP_OK)
 		Error("Setup error setting base sampling rate: ", res);
@@ -535,5 +537,14 @@ int64_t LibTalker::PullAmpData(BYTE* buffer, int nBufferSize, std::vector<float>
 	return nSampleCnt;
 }
 
-
+//bool LibTalker::CheckFDA(void)
+//{
+//	int32_t nFDA = 0;
+//	int res = 0;
+//	res = ampGetProperty(m_Handle, PG_DEVICE, 0, DPROP_B32_FastDataAccess, &nFDA, sizeof(nFDA));
+//	if (res != AMP_OK)
+//		Error("Setup error getting FDA option: ", res);
+//	return (nFDA == 1) ? true : false;
+//	
+//}
 

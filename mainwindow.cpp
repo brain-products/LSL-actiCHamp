@@ -460,6 +460,9 @@ void MainWindow::ReadThread(t_AmpConfiguration ampConfiguration)
 
 	try
 	{
+		// for debugging:
+//		bool bFDA = m_LibTalker.CheckFDA();
+
 		// setup LSL
 		lsl::stream_outlet* poutMarkerOutlet = NULL;
 		std::cout << std::string("actiCHamp" + m_LibTalker.getSerialNumber());

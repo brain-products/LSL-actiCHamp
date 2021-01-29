@@ -50,9 +50,6 @@ private:
 	bool m_bIsClosed;
 	int m_nDevNo;
 
-
-
-	
 public:
 
 	LibTalker::LibTalker();
@@ -63,6 +60,7 @@ public:
 	void Setup();
 	void Close();
 	void StopAcquisition(void);
+	//bool CheckFDA(void); // for debugging
 	//int64_t PullAmpData(BYTE* buffer, int nBufferSize, std::vector<float>& vfDataMultiplexed);
 	int64_t PullAmpData(BYTE* buffer, int nBufferSize, std::vector<float>& vfDataMultiplexed, std::vector<int>& vnTriggers);
 
