@@ -8,5 +8,5 @@ actiCHamp/Release/
 *.bit
 *.aps
 !.gitignore
-!actiCHampLib/*/*/*.dll
-!actiCHampLib/*/*/*.bit
+!actiCHampLib/Win32/Release/*.dll
+!actiCHampLib/x64/Release/*.bit

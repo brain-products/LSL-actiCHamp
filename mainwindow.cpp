@@ -66,6 +66,8 @@ void MainWindow::SetSamplingRate()
 	int nDenom = m_pnSubSampleDivisors[ui->subSampleDivisor->currentIndex()];
 	std::string sSR = std::to_string(nNum / nDenom);
 	ui->nominalSamplingRate->setText(sSR.c_str());
+
+
 	m_nSamplingRate = nNum / nDenom;
 	//setMinChunk();
 }
