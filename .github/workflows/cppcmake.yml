@@ -13,7 +13,7 @@ env:
   LSL_TAG: '1.13.2'
   LSL_RELEASE: '1.13.2'
   LSL_RELEASE_SUFFIX: ''
-  APP_VERSION: 'v1.13.2'
+  APP_VERSION: 'v1.14.0'
 
 jobs:
   build:
@@ -73,7 +73,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2-preview
       with:
-        name: pkg-actiCHamp-v1.13.2-${{ matrix.platform }}
+        name: pkg-actiCHamp-v1.14.0-${{ matrix.platform }}
         path: build/*.7z
 
     

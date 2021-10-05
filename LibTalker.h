@@ -55,8 +55,8 @@ public:
 	LibTalker::LibTalker();
 	~LibTalker();
 	void Error(const std::string& sError, int nErrorNum);
-	void Connect(const std::string& sSerialNumber);
-	void enumerate(std::vector<std::pair<std::string, int>>& ampData);
+	void Connect(const std::string& sSerialNumber, bool bUseSim=false);
+	void enumerate(std::vector<std::pair<std::string, int>>& ampData, bool bUseSim=false);
 	void Setup();
 	void Close();
 	void StopAcquisition(void);

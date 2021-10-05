@@ -22,8 +22,8 @@ void Transpose(const std::vector<std::vector<double> > &in, std::vector<std::vec
 MainWindow::MainWindow(QWidget *parent, const char* config_file): QMainWindow(parent),ui(new Ui::MainWindow)
 {
 	m_AppVersion.Major = 1;
-	m_AppVersion.Minor = 13;
-	m_AppVersion.Bugfix = 2;
+	m_AppVersion.Minor = 14;
+	m_AppVersion.Bugfix = 0;
 
 	ui->setupUi(this);
 	m_bUseActiveShield = false;
@@ -165,27 +165,21 @@ void MainWindow::RefreshDevices()
 	std::vector<std::pair<std::string, int>> ampData;
 	this->setCursor(Qt::WaitCursor);
 	this->setWindowTitle("Searching for Devices...");
-	//wait_message();
-	//ampData.clear();
 	try
 	{
-		m_LibTalker.enumerate(ampData);
+		m_LibTalker.enumerate(ampData, ui->useSim->checkState() == Qt::Checked);
 	}
 	catch (std::exception & e)
 	{
 		QMessageBox::critical(this, "Error", (std::string("Could not locate actiCHamp device(s): ") += e.what()).c_str(), QMessageBox::Ok);
 	}
-
 	this->setCursor(Qt::ArrowCursor);
-
 	if (!m_psAmpSns.empty())m_psAmpSns.clear();
 	if (!m_pnUsableChannelsByDevice.empty()) m_pnUsableChannelsByDevice.clear();
-
 	if (!ampData.empty()) {
 		ui->availableDevices->clear();
 		std::stringstream ss;
 		int i = 0;
-
 		for (std::vector<std::pair<std::string, int>>::iterator it = ampData.begin(); it != ampData.end(); ++it) {
 			ss.clear();
 			ss << it->first << " (" << it->second << ")";
@@ -198,10 +192,8 @@ void MainWindow::RefreshDevices()
 		ui->availableDevices->addItems(qsl);
 		ChooseDevice(0);
 	}
-
 	this->setWindowTitle("actiCHamp Connector");
 	ui->availableDevices->blockSignals(true);
-
 }
 
 
@@ -396,6 +388,7 @@ void MainWindow::Link()
 			ampConfiguration.m_nChunkSize = ui->chunkSize->value();
 			ampConfiguration.m_nBaseSamplingRate = ui->baseSamplingRate->currentText().toInt();
 			ampConfiguration.m_nSubSampleDivisor = ui->subSampleDivisor->currentText().toInt();
+			ampConfiguration.m_bUseSim = ui->useSim->checkState() == Qt::Checked;
 			SetSamplingRate();
 			std::vector<std::string> psChannelLabels;
 			std::string str;
@@ -423,7 +416,7 @@ void MainWindow::Link()
 
 			this->setWindowTitle(QString("Attempting to connect"));
 			this->setCursor(Qt::WaitCursor);
-			m_LibTalker.Connect(ampConfiguration.m_sSerialNumber);
+			m_LibTalker.Connect(ampConfiguration.m_sSerialNumber, ampConfiguration.m_bUseSim);
 			AmpSetup(ampConfiguration);
 
 			this->setCursor(Qt::ArrowCursor);

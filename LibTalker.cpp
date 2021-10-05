@@ -127,18 +127,18 @@ void LibTalker::Error(const std::string& sError, int nErrorNum)
 	throw std::runtime_error(sFullError);
 }
 
-void LibTalker::enumerate(std::vector<std::pair<std::string, int>>& ampData) {
+void LibTalker::enumerate(std::vector<std::pair<std::string, int>>& ampData, bool bUseSim) {
 
 	int nRes;
 	char HWI[20];
-
-
 	if (!ampData.empty()) {
 		throw std::runtime_error("Input ampData vector isn't empty");
 		return;
 	}
-
-	strcpy_s(HWI, "USB");
+	if(bUseSim)
+		strcpy_s(HWI, "SIM");
+	else
+		strcpy_s(HWI, "USB");
 
 	nRes = ampEnumerateDevices(HWI, sizeof(HWI), "actiCHamp", 0);
 
@@ -172,15 +172,6 @@ void LibTalker::enumerate(std::vector<std::pair<std::string, int>>& ampData) {
 				nResult = ampGetProperty(handle, PG_DEVICE, 0, DPROP_I32_AvailableChannels, &nAvailableChannels, sizeof(nAvailableChannels));
 				if (nResult != AMP_OK)
 					Error("Enumeration error getting available channel count: ", nResult);
-				/*int32_t nVar;
-				char sModName[100];
-				int nTotalAvailableChannels = 0;
-				for (int j = 0; j < nAvailableModules; j++)
-				{
-					nResult = ampGetProperty(handle, PG_MODULE, j, MPROP_I32_UseableChannels, &nVar, sizeof(nVar));
-					if (nResult != AMP_OK) 
-						Error("Enumeration error getting device channel: ", nResult);
-				}*/
 				int nEEGChannels = 0;
 				t_ChannelType ct;
 				for (int i = 0; i < nAvailableChannels; i++)
@@ -202,17 +193,19 @@ void LibTalker::enumerate(std::vector<std::pair<std::string, int>>& ampData) {
 }
 
 
-void LibTalker::Connect(const std::string& sSerialNumber)
+void LibTalker::Connect(const std::string& sSerialNumber, bool bUseSim)
 {
-
-	char hwi[20];
-	strcpy_s(hwi, "USB");
+	char HWI[20];
+	if (bUseSim)
+		strcpy_s(HWI, "SIM");
+	else
+		strcpy_s(HWI, "USB");
 	std::string sHWDeviceAddress = "";
 	int res;
 	Close();
 	if (m_nConnectedDeviceCnt == -1)
 	{
-		res = ampEnumerateDevices(hwi, sizeof(hwi), (const char*)sHWDeviceAddress.data(), 0);
+		res = ampEnumerateDevices(HWI, sizeof(HWI), (const char*)sHWDeviceAddress.data(), 0);
 		if (res < AMP_OK)
 		{
 			Error("Connection error enumerating devices: ", res);

@@ -10,3 +10,4 @@ actiCHamp/Release/
 !.gitignore
 !actiCHampLib/Win32/Release/*.dll
 !actiCHampLib/x64/Release/*.bit
+build*

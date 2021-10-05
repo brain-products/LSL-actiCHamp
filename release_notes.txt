@@ -1,3 +1,6 @@
+v1.14.0
+-FEATURE: added simulation mode support
+
 v1.13.2
 -BUGFIX: FDA was always on---now the toggle works properly
 

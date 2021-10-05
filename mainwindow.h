@@ -41,6 +41,7 @@ struct t_AmpConfiguration
     std::vector<std::string> m_psAuxChannelLabels;
     bool m_bUnsampledMarkers;
     bool m_bSampledMarkersEEG;
+    bool m_bUseSim;
 };
 
 namespace Ui 
