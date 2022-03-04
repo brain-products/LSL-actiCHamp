@@ -20,7 +20,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-set(lsl_DIR ${CMAKE_CURRENT_LIST_DIR})
+set(lsl_DIR ${CMAKE_CURRENT_LIST_DIR}/LSL/lib/cmake/LSL)
 
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Threads REQUIRED)
