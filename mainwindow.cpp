@@ -10,11 +10,18 @@
 #include <iostream>
 #include <sstream>
 
+#if _WIN64
+#define BITDEPTH "64"
+#else
+#define BITDEPTH "32"
+#endif
+
 const int m_pnBaseSamplingRates[] = {10000,50000,100000};
 const int m_pnSubSampleDivisors[] = { 1,2,5,10,20,50,100 };
 
 void Transpose(const std::vector<std::vector<double> > &in, std::vector<std::vector<double> > &out);
 
+#define APPNAME "actiCHamp LSL Connector " << BITDEPTH << "-bit"
 #define LIBVERSIONSTREAM(version) version.Major << "." << version.Minor << "." << version.Build << "." << version.Revision
 #define LSLVERSIONSTREAM(version) (version/100) << "." << (version%100)
 #define APPVERSIONSTREAM(version) version.Major << "." << version.Minor << "." << version.Bugfix
@@ -22,7 +29,7 @@ void Transpose(const std::vector<std::vector<double> > &in, std::vector<std::vec
 MainWindow::MainWindow(QWidget *parent, const char* config_file): QMainWindow(parent),ui(new Ui::MainWindow)
 {
 	m_AppVersion.Major = 1;
-	m_AppVersion.Minor = 14;
+	m_AppVersion.Minor = 15;
 	m_AppVersion.Bugfix = 0;
 
 	ui->setupUi(this);
@@ -42,7 +49,8 @@ MainWindow::MainWindow(QWidget *parent, const char* config_file): QMainWindow(pa
 	QObject::connect(ui->eegChannelCount, SIGNAL(valueChanged(int)), this, SLOT(UpdateChannelLabelsEEG(int)));
 	QObject::connect(ui->auxChannelCount, SIGNAL(valueChanged(int)), this, SLOT(UpdateChannelLabelsGUI(int)));
 	QObject::connect(ui->availableDevices, SIGNAL(currentIndexChanged(int)), this, SLOT(ChooseDevice(int)));
-
+	QObject::connect(ui->rbDefault, SIGNAL(clicked(bool)), this, SLOT(RadioButtonBehavior(bool)));
+	QObject::connect(ui->rbMirror, SIGNAL(clicked(bool)), this, SLOT(RadioButtonBehavior(bool)));
 	SetSamplingRate();
 }
 
@@ -53,11 +61,12 @@ void MainWindow::VersionsDialog()
 	int32_t lslProtocolVersion = lsl::protocol_version();
 	int32_t lslLibVersion = lsl::library_version();
 	std::stringstream ss;
-	ss << "Amplifier_LIB: " << LIBVERSIONSTREAM(libVersion) << "\n" <<
+	ss << 
+		"Amplifier_LIB: " << LIBVERSIONSTREAM(libVersion) << "\n" <<
 		"lsl protocol: " << LSLVERSIONSTREAM(lslProtocolVersion) << "\n" <<
 		"liblsl: " << LSLVERSIONSTREAM(lslLibVersion) << "\n" <<
-		"App: " << APPVERSIONSTREAM(m_AppVersion);
-	QMessageBox::information(this, "Versions", ss.str().c_str(), QMessageBox::Ok);
+		"App: " << APPVERSIONSTREAM(m_AppVersion) << ", " << BITDEPTH << "-bit";
+	QMessageBox::information(this, "About", ss.str().c_str(), QMessageBox::Ok);
 }
 
 void MainWindow::SetSamplingRate()
@@ -66,40 +75,9 @@ void MainWindow::SetSamplingRate()
 	int nDenom = m_pnSubSampleDivisors[ui->subSampleDivisor->currentIndex()];
 	std::string sSR = std::to_string(nNum / nDenom);
 	ui->nominalSamplingRate->setText(sSR.c_str());
-
-
 	m_nSamplingRate = nNum / nDenom;
 	//setMinChunk();
 }
-//
-//void MainWindow::SetMinChunk()
-//{
-//
-//
-//	switch (m_nSamplingRate) 
-//	{
-//	case 100:
-//		if (ui->chunkSize->value() < 100)ui->chunkSize->setValue(100);
-//		ui->chunkSize->setMinimum(100);
-//		break;
-//	case 125:
-//		if(ui->chunkSize->value()<80)ui->chunkSize->setValue(80);
-//		ui->chunkSize->setMinimum(80);
-//		break;
-//	case 250:
-//		if(ui->chunkSize->value()<40)ui->chunkSize->setValue(40);
-//		ui->chunkSize->setMinimum(40);
-//		break;
-//	case 500:
-//		if(ui->chunkSize->value()<20)ui->chunkSize->setValue(20);
-//		ui->chunkSize->setMinimum(20);
-//		break;
-//	case 1000:
-//		if(ui->chunkSize->value()<10)ui->chunkSize->setValue(10);
-//		ui->chunkSize->setMinimum(10);
-//		break;
-//	}
-//}
 
 void MainWindow::LoadConfigDialog() 
 {
@@ -196,16 +174,6 @@ void MainWindow::RefreshDevices()
 	ui->availableDevices->blockSignals(true);
 }
 
-
-void MainWindow::ChooseDevice(int which)
-{
-
-	if (!m_psAmpSns.empty())
-		ui->serialNumber->setText(QString(m_psAmpSns[which].c_str()));
-	ui->eegChannelCount->setMaximum(m_pnUsableChannelsByDevice[ui->availableDevices->currentIndex()]);
-
-}
-
 void MainWindow::UpdateChannelLabelsEEG(int n)
 {
 
@@ -265,6 +233,27 @@ void MainWindow::UpdateChannelLabels()
 
 }
 
+void MainWindow::ChooseDevice(int which)
+{
+
+	if (!m_psAmpSns.empty())
+		ui->serialNumber->setText(QString(m_psAmpSns[which].c_str()));
+	ui->eegChannelCount->setMaximum(m_pnUsableChannelsByDevice[ui->availableDevices->currentIndex()]);
+
+}
+
+void MainWindow::RadioButtonBehavior(bool b)
+{
+	if (ui->rbMirror->isChecked())
+	{
+		m_TriggerOutputMode = TM_MIRROR;
+	}
+	if (ui->rbDefault->isChecked())
+	{
+		m_TriggerOutputMode = TM_DEFAULT;
+	}
+}
+
 void MainWindow::LoadConfig(const QString &filename) 
 {
 	QSettings pt(filename, QSettings::IniFormat);
@@ -286,6 +275,9 @@ void MainWindow::LoadConfig(const QString &filename)
 	ui->overwriteChannelLabels->setCheckState(pt.value("settings/overWrite", true).toBool() ? Qt::Checked : Qt::Unchecked);
 	ui->sampledMarkersEEG->setCheckState(pt.value("settings/sampledMarkersEEG", false).toBool() ? Qt::Checked : Qt::Unchecked);
 	ui->unsampledMarkers->setCheckState(pt.value("settings/unsampledMarkers", true).toBool() ? Qt::Checked : Qt::Unchecked);
+	t_TriggerOutputMode triggerOutputMode = (t_TriggerOutputMode)pt.value("settings/triggerOutputMode", 0).toInt();
+	if (triggerOutputMode == TM_MIRROR)ui->rbMirror->setChecked(true);
+	else ui->rbDefault->setChecked(true);
 	ui->channelLabels->clear();
 	ui->channelLabels->setPlainText(pt.value("channels/labels").toStringList().join('\n'));
 	UpdateChannelLabels();
@@ -309,8 +301,8 @@ void MainWindow::SaveConfig(const QString& filename)
 	pt.setValue("unsampledMarkers", ui->unsampledMarkers->checkState() == Qt::Checked);
 	pt.setValue("sampledMarkersEEG", ui->sampledMarkersEEG->checkState() == Qt::Checked);
 	pt.setValue("overWrite", ui->overwriteChannelLabels->checkState() == Qt::Checked);
+	pt.setValue("triggerOutputMode", m_TriggerOutputMode);
 	pt.endGroup();
-
 	pt.beginGroup("channels");
 	pt.setValue("labels", ui->channelLabels->toPlainText().split('\n'));
 	pt.endGroup();
@@ -351,7 +343,6 @@ void MainWindow::ToggleGUIEnabled(bool bEnabled)
 		ui->channelGroup->setEnabled(false);
 		ui->linkButton->setEnabled(true);
 		ui->linkButton->setText("Unlink");
-
 	}
 }
 
@@ -365,7 +356,6 @@ void MainWindow::Link()
 			m_bStop = true;
 			m_ptReadThread->join();
 			m_ptReadThread.reset();
-			
 		} 
 		catch(std::exception &e) 
 		{
@@ -395,7 +385,6 @@ void MainWindow::Link()
 			std::istringstream iss(ui->channelLabels->toPlainText().toStdString());
 			while (std::getline(iss, str, '\n'))
 				psChannelLabels.push_back(str);
-
 			std::vector<std::string> psEegChannelLabels;
 			std::vector<std::string> psAuxChannelLabels;
 			int i = 0;
@@ -417,8 +406,8 @@ void MainWindow::Link()
 			this->setWindowTitle(QString("Attempting to connect"));
 			this->setCursor(Qt::WaitCursor);
 			m_LibTalker.Connect(ampConfiguration.m_sSerialNumber, ampConfiguration.m_bUseSim);
+			m_LibTalker.setOutTriggerMode(m_TriggerOutputMode);
 			AmpSetup(ampConfiguration);
-
 			this->setCursor(Qt::ArrowCursor);
 			this->setWindowTitle("actiCHamp Connector");
 			// start reader thread

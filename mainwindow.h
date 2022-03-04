@@ -71,6 +71,7 @@ private slots:
     void UpdateChannelLabelsEEG(int);
     void UpdateChannelLabelsGUI(int);
     void ChooseDevice(int which);
+    void RadioButtonBehavior(bool b);
 
 
 private:
@@ -88,7 +89,8 @@ private:
     bool m_bUseActiveShield;
     int m_nSamplingRate;
     bool m_bOverrideAutoUpdate;
-	bool m_bStop;										
+	bool m_bStop;				
+    t_TriggerOutputMode m_TriggerOutputMode;
     std::unique_ptr<std::thread>  m_ptReadThread;   	
     Ui::MainWindow *ui;
 };

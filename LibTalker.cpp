@@ -266,6 +266,16 @@ void LibTalker::Connect(const std::string& sSerialNumber, bool bUseSim)
 		if (nChannelType == CT_TRG)
 			m_nTriggerIdx = i;
 	}
+	res = ampGetProperty(m_Handle, PG_DEVICE, 0, DPROP_I32_AvailableModules, &m_nAvailableModules, sizeof(m_nAvailableModules));
+	if (res != AMP_OK)
+		Error("Error getting available module channel count, error code:  ", res);
+	char sModName[100]; sModName[99] = 0;
+	for (int n = 0; n < m_nAvailableModules; n++)
+	{
+		res = ampGetProperty(m_Handle, PG_MODULE, n, MPROP_CHR_Type, &sModName, sizeof(sModName));
+		if (res != AMP_OK)
+			Error("Error getting available module names, error code:  ", res);
+	}
 }
 
 void LibTalker::EnableChannels()
@@ -538,6 +548,13 @@ bool LibTalker::CheckFDA(void)
 	if (res != AMP_OK)
 		Error("Setup error getting FDA option: ", res);
 	return (nFDA == 1) ? true : false;
-	
+}
+
+void LibTalker::setOutTriggerMode(t_TriggerOutputMode triggerMode, int nSyncPin, int nFreq, int nPulseWidth)
+{
+
+	int res = ampSetProperty(m_Handle, PG_MODULE, 0, MPROP_I32_TriggerOutMode, &triggerMode, sizeof(triggerMode));
+	if (res != AMP_OK)
+		Error("Error setting trigger output mode, error code:  ", res);
 }
 
