@@ -83,6 +83,11 @@ target_link_libraries(${PROJECT_NAME}
 	${actiCHampLib}
 )	
 
+set (CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+include (InstallRequiredSystemLibraries)
+install (PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+        DESTINATION mydir)
+
 install(TARGETS ${PROJECT_NAME}
 	COMPONENT "${PROJECT_NAME}"
 	BUNDLE DESTINATION bin
