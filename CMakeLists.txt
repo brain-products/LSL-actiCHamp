@@ -22,7 +22,13 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Threads REQUIRED)
-find_package(lsl REQUIRED)
+find_package(lsl REQUIRED
+	HINTS ${LSL_INSTALL_ROOT}
+	"${CMAKE_CURRENT_LIST_DIR}/../../LSL/liblsl/build/"
+	"${CMAKE_CURRENT_LIST_DIR}/../../LSL/liblsl/build/install"
+	"${CMAKE_CURRENT_LIST_DIR}/../../LSL/liblsl/out/build/x64-Release"
+	"${CMAKE_CURRENT_LIST_DIR}/../../LSL/liblsl/out/install/x64-Release"
+	PATH_SUFFIXES share/LSL)
 
 set_target_properties(${target} PROPERTIES AUTORCC_OPTIONS "--compress;9")
 
