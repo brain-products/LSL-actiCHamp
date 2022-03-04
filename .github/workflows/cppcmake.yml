@@ -68,13 +68,15 @@ jobs:
            
     - name: package
       run: |
-           cmake --build build --config Release -j --target package
+           cmake --build build --config Release -j --target bundle
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2-preview
       with:
-        name: pkg-actiCHamp-v1.14.0-${{ matrix.platform }}
-        path: build/*.7z
+        name: pkg-${{ matrix.platform }}
+        path: |
+            build/*.zip
+            build/*.exe
 
     
     
