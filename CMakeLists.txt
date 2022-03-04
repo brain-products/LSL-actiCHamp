@@ -104,6 +104,11 @@ install(FILES explanation_of_trigger_marker_types.pdf
 	COMPONENT "${PROJECT_NAME}"
 )
 
+get_target_property(qmake_executable Qt5::qmake IMPORTED_LOCATION)
+get_filename_component(_qt_bin_dir "${qmake_executable}" DIRECTORY)
+find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
+mark_as_advanced(WINDEPLOYQT_EXECUTABLE)
+
 function(windeployqt target)
 	# Bundle Library Files
     if(CMAKE_BUILD_TYPE_UPPER STREQUAL "DEBUG")
