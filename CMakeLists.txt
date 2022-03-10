@@ -72,7 +72,7 @@ add_executable(${PROJECT_NAME} WIN32
 	mainwindow.h
 	mainwindow.ui
 	mainwindow.rc
-	actiCHampLib/Amplifier_LIB.h 
+	actiCHampLib/Amplifier_LIB.h
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -94,6 +94,11 @@ install(TARGETS ${PROJECT_NAME}
 
 
 install(FILES $<TARGET_FILE:LSL::lsl>
+	DESTINATION bin
+	COMPONENT "${PROJECT_NAME}"
+)
+
+install(FILES ${actiCHampLibDll} ${ActiChampDll} ${ActiChampXBit} ${ActiChampBit}
 	DESTINATION bin
 	COMPONENT "${PROJECT_NAME}"
 )
@@ -141,19 +146,38 @@ function(windeployqt target)
 endfunction()
 
 # for building vcxproj for debugging etc.
-# add_custom_command(
-		# TARGET ${PROJECT_NAME} POST_BUILD
-		# COMMAND ${WINDEPLOYQT_EXECUTABLE} --qmldir
-			# ${CMAKE_SOURCE_DIR} $<TARGET_FILE_DIR:${PROJECT_NAME}>)
-			
-# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-	# COMMAND ${CMAKE_COMMAND} -E copy_if_different  
-		# $<TARGET_FILE:LSL::lsl>
-		# $<TARGET_FILE_DIR:${PROJECT_NAME}>)
-# add_custom_command(
-	# TARGET ${PROJECT_NAME} POST_BUILD
-	# COMMAND ${CMAKE_COMMAND} -E copy
-		# ${CMAKE_SOURCE_DIR}//${PROJECT_NAME}.cfg
-		# $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+	COMMAND ${WINDEPLOYQT_EXECUTABLE} --qmldir
+	${CMAKE_SOURCE_DIR} $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+	
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different  
+	$<TARGET_FILE:LSL::lsl>
+	$<TARGET_FILE_DIR:${PROJECT_NAME}>)
+	
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different  
+	${actiCHampLibDll}
+	$<TARGET_FILE_DIR:${PROJECT_NAME}>)
+	
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different  
+	${ActiChampDll}
+	$<TARGET_FILE_DIR:${PROJECT_NAME}>)
+	
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different  
+	${ActiChampXBit}
+	$<TARGET_FILE_DIR:${PROJECT_NAME}>)
+	
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different  
+	${ActiChampBit}
+	$<TARGET_FILE_DIR:${PROJECT_NAME}>)
+	
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy
+	${CMAKE_SOURCE_DIR}//${PROJECT_NAME}.cfg
+	$<TARGET_FILE_DIR:${PROJECT_NAME}>)
 
 include(${CMAKE_CURRENT_LIST_DIR}/Packaging.cmake)

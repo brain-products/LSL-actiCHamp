@@ -373,6 +373,9 @@ PO10 </string>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
              <widget class="QRadioButton" name="rbDefault">
+              <property name="toolTip">
+               <string>Default is no triggers output from device.</string>
+              </property>
               <property name="text">
                <string>Default (no output)</string>
               </property>
@@ -383,6 +386,9 @@ PO10 </string>
             </item>
             <item>
              <widget class="QRadioButton" name="rbMirror">
+              <property name="toolTip">
+               <string>Mirror mode will hardwire the output on Trigger Out to the input on Trigger In (actiCHamp Plus only).</string>
+              </property>
               <property name="text">
                <string>Mirror Input</string>
               </property>

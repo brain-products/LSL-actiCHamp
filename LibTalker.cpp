@@ -135,7 +135,7 @@ void LibTalker::enumerate(std::vector<std::pair<std::string, int>>& ampData, boo
 		throw std::runtime_error("Input ampData vector isn't empty");
 		return;
 	}
-	if(bUseSim)
+	if (bUseSim)
 		strcpy_s(HWI, "SIM");
 	else
 		strcpy_s(HWI, "USB");
@@ -185,8 +185,9 @@ void LibTalker::enumerate(std::vector<std::pair<std::string, int>>& ampData, boo
 				}
 				ampData.push_back(std::make_pair(std::string(sVar), nEEGChannels));
 			}
+
 			nResult = ampCloseDevice(handle);
-			if (nResult != AMP_OK) 
+			if (nResult != AMP_OK)
 				Error("Enumeration error closing device: ", nResult);
 		}
 	}
@@ -238,7 +239,7 @@ void LibTalker::Connect(const std::string& sSerialNumber, bool bUseSim)
 			break;
 		}
 		res = ampCloseDevice(handle);
-		
+
 	}
 	if (m_Handle == NULL)
 		throw std::exception("Could not connect to specified amplifier. Please recheck connections and re-scan for devices.");
@@ -269,7 +270,7 @@ void LibTalker::Connect(const std::string& sSerialNumber, bool bUseSim)
 	res = ampGetProperty(m_Handle, PG_DEVICE, 0, DPROP_I32_AvailableModules, &m_nAvailableModules, sizeof(m_nAvailableModules));
 	if (res != AMP_OK)
 		Error("Error getting available module channel count, error code:  ", res);
-	char sModName[100]; sModName[99] = 0;
+	char sModName[100]; 
 	for (int n = 0; n < m_nAvailableModules; n++)
 	{
 		res = ampGetProperty(m_Handle, PG_MODULE, n, MPROP_CHR_Type, &sModName, sizeof(sModName));
@@ -285,10 +286,10 @@ void LibTalker::EnableChannels()
 	m_nEnabledChannelCnt = 0;
 
 	if (m_nRequestedEEGChannelCnt > m_nAvailableChannelCnt)
-		throw std::exception(std::string("Requested Number of EEG channels (" 
-			+std::to_string(m_nRequestedEEGChannelCnt) 
-			+ ") is greater than the number of channels (" 
-			+ std::to_string(m_nAvailableChannelCnt) 
+		throw std::exception(std::string("Requested Number of EEG channels ("
+			+ std::to_string(m_nRequestedEEGChannelCnt)
+			+ ") is greater than the number of channels ("
+			+ std::to_string(m_nAvailableChannelCnt)
 			+ "available on this device.").c_str());
 
 	char pcFunction[100];
@@ -315,7 +316,7 @@ void LibTalker::EnableChannels()
 		if (nChannType == CT_TRG && m_bUseTriggers)
 		{
 			res = ampGetProperty(m_Handle, PG_CHANNEL, i, CPROP_CHR_Function, &pcFunction, sizeof(pcFunction));
-			if (strcmp(pcFunction, "Trigger Input")==0)
+			if (strcmp(pcFunction, "Trigger Input") == 0)
 			{
 				nVal = 1;
 				res = ampSetProperty(m_Handle, PG_CHANNEL, i, CPROP_B32_RecordingEnabled, &nVal, sizeof(nVal));
@@ -359,12 +360,12 @@ void LibTalker::Setup()
 	res = ampStartAcquisition(m_Handle);
 	if (res != AMP_OK)
 		Error("Setup error starting acquistion: ", res);
-	
+
 	res = ampGetProperty(m_Handle, PG_DEVICE, 0, DPROP_CHR_SerialNumber, &pcSerialNumber, sizeof(pcSerialNumber));
 	m_sSerialNumber = std::string(pcSerialNumber);
 
 	for (int i = 0; i < m_nAvailableChannelCnt; i++) {
-		
+
 		res = ampGetProperty(m_Handle, PG_CHANNEL, i, CPROP_B32_RecordingEnabled, &nEnabled, sizeof(nEnabled));
 
 		if (nEnabled) {
@@ -428,7 +429,7 @@ void LibTalker::Close(void) {
 
 }
 
-void LibTalker::StopAcquisition(void) 
+void LibTalker::StopAcquisition(void)
 {
 	int res = ampStopAcquisition(m_Handle);
 }
@@ -436,7 +437,7 @@ void LibTalker::StopAcquisition(void)
 int64_t LibTalker::PullAmpData(BYTE* buffer, int nBufferSize, std::vector<float>& vfOutDataMultiplexed, std::vector<int>& vnTriggers)
 {
 	int64_t nSamplesRead = ampGetData(m_Handle, buffer, nBufferSize, 0);
-	
+
 	if (nSamplesRead == 0)return 0;
 	if (nSamplesRead < 0)
 		Error("Error pulling samples from device: ", nSamplesRead);
@@ -550,11 +551,26 @@ bool LibTalker::CheckFDA(void)
 	return (nFDA == 1) ? true : false;
 }
 
-void LibTalker::setOutTriggerMode(t_TriggerOutputMode triggerMode, int nSyncPin, int nFreq, int nPulseWidth)
+bool LibTalker::setOutTriggerMode(t_TriggerOutputMode triggerMode, int nSyncPin, int nFreq, int nPulseWidth)
 {
-
-	int res = ampSetProperty(m_Handle, PG_MODULE, 0, MPROP_I32_TriggerOutMode, &triggerMode, sizeof(triggerMode));
+	char sVar[20];
+	bool retVal = true;
+	int res = ampGetProperty(m_Handle, PG_DEVICE, 0, DPROP_CHR_Type, sVar, sizeof(sVar));
 	if (res != AMP_OK)
+	{
+		Error("Error checking device type before setting trigger output mode, error code:  ", res);
+	}
+
+	if (strcmp(sVar, "5002"))
+	{
+		retVal = false;
+		triggerMode = t_TriggerOutputMode::TM_DEFAULT;
+	}
+	res = ampSetProperty(m_Handle, PG_MODULE, 0, MPROP_I32_TriggerOutMode, &triggerMode, sizeof(triggerMode));
+	if (res != AMP_OK)
+	{
 		Error("Error setting trigger output mode, error code:  ", res);
+	}
+	return retVal;
 }
 

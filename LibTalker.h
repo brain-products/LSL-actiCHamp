@@ -61,7 +61,7 @@ public:
 	void Close();
 	void StopAcquisition(void);
 	bool CheckFDA(void); // for debugging
-	void setOutTriggerMode(t_TriggerOutputMode mode, int syncPin = 1, int freq = 1, int pulseWidth = 50);
+	bool setOutTriggerMode(t_TriggerOutputMode mode, int syncPin = 1, int freq = 1, int pulseWidth = 50);
 	int64_t PullAmpData(BYTE* buffer, int nBufferSize, std::vector<float>& vfDataMultiplexed, std::vector<int>& vnTriggers);
 
 	// public data access methods 	

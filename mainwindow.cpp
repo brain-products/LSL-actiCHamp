@@ -223,14 +223,11 @@ void MainWindow::UpdateChannelLabels()
 			str = std::to_string(i + 1);
 		ui->channelLabels->appendPlainText(str.c_str());
 	}
-
 	for (int i = 0; i < nAux; i++)
 	{
 		str = "AUX_" + std::to_string(i + 1);
 		ui->channelLabels->appendPlainText(str.c_str());
 	}
-
-
 }
 
 void MainWindow::ChooseDevice(int which)
@@ -239,7 +236,6 @@ void MainWindow::ChooseDevice(int which)
 	if (!m_psAmpSns.empty())
 		ui->serialNumber->setText(QString(m_psAmpSns[which].c_str()));
 	ui->eegChannelCount->setMaximum(m_pnUsableChannelsByDevice[ui->availableDevices->currentIndex()]);
-
 }
 
 void MainWindow::RadioButtonBehavior(bool b)
@@ -406,7 +402,8 @@ void MainWindow::Link()
 			this->setWindowTitle(QString("Attempting to connect"));
 			this->setCursor(Qt::WaitCursor);
 			m_LibTalker.Connect(ampConfiguration.m_sSerialNumber, ampConfiguration.m_bUseSim);
-			m_LibTalker.setOutTriggerMode(m_TriggerOutputMode);
+			if(!m_LibTalker.setOutTriggerMode(m_TriggerOutputMode))
+				ui->rbDefault->setChecked(true);
 			AmpSetup(ampConfiguration);
 			this->setCursor(Qt::ArrowCursor);
 			this->setWindowTitle("actiCHamp Connector");
