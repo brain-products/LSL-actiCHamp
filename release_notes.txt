@@ -1,3 +1,8 @@
+v1.15.0
+-FEATURE: added mirror trigger output option
+-FEATURE: report bitness in Help->About
+-FEATURE: bumped lsl to version 1.15.2
+
 v1.14.0
 -FEATURE: added simulation mode support
 

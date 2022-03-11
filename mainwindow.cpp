@@ -352,6 +352,7 @@ void MainWindow::Link()
 			m_bStop = true;
 			m_ptReadThread->join();
 			m_ptReadThread.reset();
+			m_LibTalker.setOutTriggerMode(TriggerOutputMode::TM_DEFAULT);
 		} 
 		catch(std::exception &e) 
 		{

@@ -560,7 +560,6 @@ bool LibTalker::setOutTriggerMode(t_TriggerOutputMode triggerMode, int nSyncPin,
 	{
 		Error("Error checking device type before setting trigger output mode, error code:  ", res);
 	}
-
 	if (strcmp(sVar, "5002"))
 	{
 		retVal = false;
