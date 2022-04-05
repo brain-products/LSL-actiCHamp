@@ -30,12 +30,11 @@ MainWindow::MainWindow(QWidget *parent, const char* config_file): QMainWindow(pa
 {
 	m_AppVersion.Major = 1;
 	m_AppVersion.Minor = 15;
-	m_AppVersion.Bugfix = 0;
+	m_AppVersion.Bugfix = 1;
 
 	ui->setupUi(this);
 	m_bUseActiveShield = false;
 	m_bOverrideAutoUpdate = false;
-	LoadConfig(config_file);
 
 	// make GUI connections
 	QObject::connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(close()));
@@ -52,6 +51,33 @@ MainWindow::MainWindow(QWidget *parent, const char* config_file): QMainWindow(pa
 	QObject::connect(ui->rbDefault, SIGNAL(clicked(bool)), this, SLOT(RadioButtonBehavior(bool)));
 	QObject::connect(ui->rbMirror, SIGNAL(clicked(bool)), this, SLOT(RadioButtonBehavior(bool)));
 	SetSamplingRate();
+	QString cfgfilepath = find_config_file(config_file);
+	LoadConfig(cfgfilepath);
+}
+
+QString MainWindow::find_config_file(const char* filename) {
+	if (filename) {
+		QString qfilename(filename);
+		if (!QFileInfo::exists(qfilename))
+			QMessageBox(QMessageBox::Warning, "Config file not found",
+				QStringLiteral("The file '%1' doesn't exist").arg(qfilename), QMessageBox::Ok,
+				this);
+		else
+			return qfilename;
+	}
+	QFileInfo exeInfo(QCoreApplication::applicationFilePath());
+	QString defaultCfgFilename(exeInfo.completeBaseName() + ".cfg");
+	qInfo() << defaultCfgFilename;
+	QStringList cfgpaths;
+	cfgpaths << QDir::currentPath()
+		<< QStandardPaths::standardLocations(QStandardPaths::ConfigLocation) << exeInfo.path();
+	for (auto path : cfgpaths) {
+		QString cfgfilepath = path + QDir::separator() + defaultCfgFilename;
+		if (QFileInfo::exists(cfgfilepath)) return cfgfilepath;
+	}
+	QMessageBox::warning(this, "No config file not found",
+		QStringLiteral("No default config file could be found"), "Continue with default config");
+	return "";
 }
 
 void MainWindow::VersionsDialog()

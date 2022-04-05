@@ -1,3 +1,7 @@
+v1.15.1
+-BUGFIX: removed trigger mode setting error for old actiCHamp (not plus) 
+-BUGFIX: config file loading properly
+
 v1.15.0
 -FEATURE: added mirror trigger output option
 -FEATURE: report bitness in Help->About

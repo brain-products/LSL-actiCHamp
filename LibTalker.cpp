@@ -554,21 +554,19 @@ bool LibTalker::CheckFDA(void)
 bool LibTalker::setOutTriggerMode(t_TriggerOutputMode triggerMode, int nSyncPin, int nFreq, int nPulseWidth)
 {
 	char sVar[20];
-	bool retVal = true;
+ 	bool retVal = true;
 	int res = ampGetProperty(m_Handle, PG_DEVICE, 0, DPROP_CHR_Type, sVar, sizeof(sVar));
 	if (res != AMP_OK)
 	{
 		Error("Error checking device type before setting trigger output mode, error code:  ", res);
 	}
-	if (strcmp(sVar, "5002"))
+	if (!strcmp(sVar, "5002"))
 	{
-		retVal = false;
-		triggerMode = t_TriggerOutputMode::TM_DEFAULT;
-	}
-	res = ampSetProperty(m_Handle, PG_MODULE, 0, MPROP_I32_TriggerOutMode, &triggerMode, sizeof(triggerMode));
-	if (res != AMP_OK)
-	{
-		Error("Error setting trigger output mode, error code:  ", res);
+		res = ampSetProperty(m_Handle, PG_MODULE, 0, MPROP_I32_TriggerOutMode, &triggerMode, sizeof(triggerMode));
+		if (res != AMP_OK)
+		{
+			Error("Error setting trigger output mode, error code:  ", res);
+		}
 	}
 	return retVal;
 }

@@ -58,7 +58,7 @@ public:
     ~MainWindow();
     
 private slots:
-
+    QString find_config_file(const char* filename);
     void LoadConfigDialog();
     void SaveConfigDialog();
     void Link();
