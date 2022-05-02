@@ -30,7 +30,7 @@ MainWindow::MainWindow(QWidget *parent, const char* config_file): QMainWindow(pa
 {
 	m_AppVersion.Major = 1;
 	m_AppVersion.Minor = 15;
-	m_AppVersion.Bugfix = 1;
+	m_AppVersion.Bugfix = 2;
 
 	ui->setupUi(this);
 	m_bUseActiveShield = false;
@@ -425,7 +425,16 @@ void MainWindow::Link()
 			ampConfiguration.m_psAuxChannelLabels = psAuxChannelLabels;
 			ampConfiguration.m_bUnsampledMarkers = ui->unsampledMarkers->checkState() == Qt::Checked;
 			ampConfiguration.m_bSampledMarkersEEG = ui->sampledMarkersEEG->checkState() == Qt::Checked;
-
+			if (ampConfiguration.m_psEegChannelLabels.size() > 32 && (ampConfiguration.m_nBaseSamplingRate / ampConfiguration.m_nSubSampleDivisor == 100000))
+			{
+				QMessageBox::critical(this, "Error", "Can not initialize the actiCHamp. A Sampling Rate of 100kHz is limited to 32 channels of EEG.", QMessageBox::Ok);
+				return;
+			}
+			if (ampConfiguration.m_psEegChannelLabels.size() > 64 && (ampConfiguration.m_nBaseSamplingRate / ampConfiguration.m_nSubSampleDivisor == 50000))
+			{
+				QMessageBox::critical(this, "Error", "Can not initialize the actiCHamp. A Sampling Rate of 50kHz is limited to 64 channels of EEG.", QMessageBox::Ok);
+				return;
+			}
 			this->setWindowTitle(QString("Attempting to connect"));
 			this->setCursor(Qt::WaitCursor);
 			m_LibTalker.Connect(ampConfiguration.m_sSerialNumber, ampConfiguration.m_bUseSim);
@@ -434,6 +443,7 @@ void MainWindow::Link()
 			AmpSetup(ampConfiguration);
 			this->setCursor(Qt::ArrowCursor);
 			this->setWindowTitle("actiCHamp Connector");
+			
 			// start reader thread
 			m_bStop = false;
 			m_ptReadThread.reset(new std::thread(&MainWindow::ReadThread,this, ampConfiguration));

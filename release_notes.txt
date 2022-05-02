@@ -1,3 +1,7 @@
+v1.15.2
+-BUGFIX: change minimum EEG channel count from 1 to 0
+-BUGFIX: prohibit attempts to have more than 32 channels of EEG at 100kHz and 64 at 50kHz 
+
 v1.15.1
 -BUGFIX: removed trigger mode setting error for old actiCHamp (not plus) 
 -BUGFIX: config file loading properly
