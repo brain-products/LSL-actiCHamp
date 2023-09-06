@@ -3,7 +3,7 @@ LSL connector for the actiCHamp (plus) device from Brain Products.
 
 To download, please click the 'Latest release' link to the right for the latest versions.
 
-Please note that you may need to install the Microsoft C++ redistributable packages ([here]([https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170))) in order to run the executables. Please note that for this app to function properly, you may need to download and install not only the package for Visual Studio 2015, 2017, and 2019, but also the Visual Studio 2012 (VC++ 11.0) redistributable package. Both packages can be found by following the link above.
+Please note that you may need to install the Microsoft C++ redistributable packages ([here](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads)) in order to run the executables. Please note that for this app to function properly, you may need to download and install not only the package for Visual Studio 2015, 2017, and 2019, but also the Visual Studio 2012 (VC++ 11.0) redistributable package. Both packages can be found by following the link above.
 
 # Getting Started
 If you are new to using LSL, you might want to read the [Quick Start guide](https://labstreaminglayer.readthedocs.io/info/getting_started.html) on the LabStreamingLayer main repository. 
