@@ -1,3 +1,8 @@
+> [!Warning]
+> # Project deprecated
+> LSL-actiCHamp is no longer maintained and has been deprecated.
+> Please find the new BrainVision LSL Connector for actiCHamp and corresponding documentation directly on the Brain Products website as free downloads.
+
 # LSL-actiCHamp
 LSL connector for the actiCHamp (plus) device from Brain Products.
 
